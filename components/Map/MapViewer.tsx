@@ -28,7 +28,25 @@ const MapController = ({ center, zoom }: { center: [number, number]; zoom: numbe
             map.invalidateSize();
         }, 100);
     }, [center, zoom, map]);
-    return null;
+
+    return (
+        <div className="leaflet-bottom leaflet-right">
+            <div className="leaflet-control leaflet-bar">
+                <button
+                    className="bg-white text-black p-2 font-bold w-10 h-10 flex items-center justify-center hover:bg-gray-100"
+                    title="Locate Me"
+                    onClick={(e) => {
+                        e.stopPropagation(); // prevent map click
+                        map.locate().on('locationfound', (e) => {
+                            map.flyTo(e.latlng, 10);
+                        });
+                    }}
+                >
+                    📍
+                </button>
+            </div>
+        </div>
+    );
 };
 
 export default function MapViewer({ center = [20, 0], zoom = 2, children }: MapViewerProps) {

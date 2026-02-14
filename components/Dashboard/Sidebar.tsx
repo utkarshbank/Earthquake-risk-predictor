@@ -20,16 +20,23 @@ export default function Sidebar({
     onMagChange,
 }: SidebarProps) {
     return (
-        <div className="absolute top-4 left-4 z-[1000] w-80 glass p-4 rounded-xl text-white flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
-            <h1 className="text-2xl font-bold mb-2">QuakeWatch</h1>
+        <div className="sidebar glass">
+            <h1 className="text-2xl font-bold mb-2" style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>QuakeWatch</h1>
+
+            {/* Navigation to Analysis */}
+            <div style={{ marginBottom: '1rem' }}>
+                <a href="/analyze" className="btn-primary">
+                    <span style={{ marginRight: '0.5rem' }}>🗺️</span> Upload & Analyze Map
+                </a>
+            </div>
 
             {/* Controls */}
-            <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-gray-300">Time Period</label>
+            <div className="control-group">
+                <label className="text-sm font-semibold text-gray-300" style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Time Period</label>
                 <select
                     value={period}
                     onChange={(e) => onPeriodChange(e.target.value)}
-                    className="bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white"
+                    className="select-input"
                 >
                     <option value="hour">Past Hour</option>
                     <option value="day">Past Day</option>
@@ -37,11 +44,11 @@ export default function Sidebar({
                     <option value="month">Past Month</option>
                 </select>
 
-                <label className="text-sm font-semibold text-gray-300 mt-2">Min Magnitude</label>
+                <label className="text-sm font-semibold text-gray-300" style={{ fontSize: '0.875rem', color: '#cbd5e1', marginTop: '0.5rem' }}>Min Magnitude</label>
                 <select
                     value={magnitude}
                     onChange={(e) => onMagChange(e.target.value)}
-                    className="bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white"
+                    className="select-input"
                 >
                     <option value="1.0">M 1.0+</option>
                     <option value="2.5">M 2.5+</option>
@@ -50,38 +57,38 @@ export default function Sidebar({
                 </select>
             </div>
 
-            <div className="border-t border-slate-600 my-2"></div>
+            <div style={{ borderTop: '1px solid rgba(71,85,105,1)', margin: '0.5rem 0' }}></div>
 
             {/* Stats */}
-            <div className="text-sm">
-                <span className="text-gray-400">Total Events:</span>{' '}
-                <span className="font-bold text-xl">{totalEvents}</span>
+            <div className="stat-item">
+                <span style={{ color: '#94a3b8' }}>Total Events:</span>{' '}
+                <span className="stat-value">{totalEvents}</span>
             </div>
 
             {/* Selected Event Details (Simple Risk Analysis Heuristic) */}
             {selectedEvent ? (
-                <div className="mt-4 p-3 bg-slate-800/50 rounded-lg animate-fade-in border border-slate-600">
-                    <h2 className="text-lg font-bold text-primary mb-1">Event Analysis</h2>
-                    <div className="text-3xl font-black mb-2" style={{ color: getRiskColor(selectedEvent.properties.mag) }}>
+                <div className="card-panel">
+                    <h2 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#3b82f6', marginBottom: '0.25rem' }}>Event Analysis</h2>
+                    <div style={{ fontSize: '1.875rem', fontWeight: '900', marginBottom: '0.5rem', color: getRiskColor(selectedEvent.properties.mag) }}>
                         Risk Score: {calculateRisk(selectedEvent.properties.mag)}/10
                     </div>
 
-                    <p className="text-sm mb-1">
-                        <span className="text-gray-400">Location:</span> {selectedEvent.properties.place}
+                    <p style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                        <span style={{ color: '#94a3b8' }}>Location:</span> {selectedEvent.properties.place}
                     </p>
-                    <p className="text-sm mb-1">
-                        <span className="text-gray-400">Depth:</span> {selectedEvent.geometry.coordinates[2]} km
+                    <p style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                        <span style={{ color: '#94a3b8' }}>Depth:</span> {selectedEvent.geometry.coordinates[2]} km
                     </p>
-                    <p className="text-sm mb-1">
-                        <span className="text-gray-400">Significance:</span> {selectedEvent.properties.sig}
+                    <p style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                        <span style={{ color: '#94a3b8' }}>Significance:</span> {selectedEvent.properties.sig}
                     </p>
 
-                    <div className="mt-3 text-xs text-gray-400 italic">
+                    <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
                         * Risk score is a heuristic based on magnitude and depth. Real analysis would require building codes and population density data.
                     </div>
                 </div>
             ) : (
-                <div className="mt-4 p-4 text-center text-gray-500 text-sm">
+                <div style={{ marginTop: '1rem', padding: '1rem', textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>
                     Select an earthquake on the map to see risk analysis.
                 </div>
             )}

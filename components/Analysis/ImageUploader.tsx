@@ -1,84 +1,63 @@
 'use client';
 
-import { useState, ChangeEvent } from 'react';
+import { useCallback } from 'react';
+import { UploadCloud, FileImage, ShieldCheck, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface ImageUploaderProps {
-    onImageSelected: (imageDataUrl: string) => void;
+    onImageSelected: (url: string) => void;
 }
 
 export default function ImageUploader({ onImageSelected }: ImageUploaderProps) {
-    const [isDragging, setIsDragging] = useState(false);
-
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            processFile(file);
-        }
-    };
-
-    const processFile = (file: File) => {
-        if (!file.type.startsWith('image/')) {
-            alert('Please upload an image file.');
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const result = e.target?.result as string;
-            onImageSelected(result);
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-    };
-
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-        const file = e.dataTransfer.files?.[0];
-        if (file) {
-            processFile(file);
+            const url = URL.createObjectURL(file);
+            onImageSelected(url);
         }
     };
 
     return (
-        <div
-            className="upload-zone"
-            style={{
-                borderColor: isDragging ? 'var(--primary)' : undefined,
-                backgroundColor: isDragging ? 'rgba(59, 130, 246, 0.1)' : undefined,
-            }}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-        >
-            <input
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                id="file-upload"
-                onChange={handleFileChange}
-            />
-            <label htmlFor="file-upload" style={{ cursor: 'pointer', display: 'block' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                    <svg style={{ width: '3rem', height: '3rem', color: '#94a3b8' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#e2e8f0' }}>
-                        Upload Map Image
+        <div className="relative group">
+            {/* Billion Dollar Glow on Hover */}
+            <div className="absolute -inset-1.5 bg-cyan/30 rounded-[3rem] blur-2xl opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-500"></div>
+
+            <label className="relative flex flex-col items-center justify-center w-full min-h-[450px] bg-navy-900/40 backdrop-blur-2xl border-2 border-white/5 hover:border-cyan/50 rounded-[3rem] cursor-pointer transition-all duration-700 shadow-2xl">
+                <div className="flex flex-col items-center justify-center pt-10 pb-12 px-16 text-center">
+                    <div className="w-20 h-20 rounded-3xl border-2 border-cyan/20 flex items-center justify-center mb-10 group-hover:scale-110 group-hover:bg-cyan/10 group-hover:border-cyan/50 transition-all duration-700 shadow-cyan bg-midnight relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-cyan/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <UploadCloud className="w-8 h-8 text-cyan/60 group-hover:text-cyan transition-colors" />
                     </div>
-                    <p style={{ color: '#94a3b8' }}>
-                        Click or drag & drop a satellite map
+
+                    <div className="flex items-center gap-3 mb-4">
+                        <Zap className="w-3 h-3 text-cyan animate-pulse" />
+                        <h3 className="text-3xl serif text-white tracking-[0.2em] font-light uppercase">
+                            Transmit <span className="text-cyan glow-cyan italic">Data</span>
+                        </h3>
+                    </div>
+
+                    <p className="text-[0.6rem] tracking-[0.5em] text-white/30 uppercase font-bold mb-12 px-8 leading-relaxed font-mono">
+                        Satellite Spectral Mapping Data Acquisition (TIFF, PNG, JPG)
                     </p>
+
+                    <div className="btn-cyan !px-10 !py-4 shadow-cyan group-hover:scale-105 transition-all">
+                        <div className="flex items-center gap-4">
+                            <FileImage className="w-4 h-4" />
+                            <span className="text-[0.7rem] uppercase tracking-[0.3em] font-bold">Initialize Upload</span>
+                        </div>
+                    </div>
+
+                    <div className="mt-12 pt-10 border-t border-white/5 w-full flex items-center justify-center gap-4 opacity-40">
+                        <ShieldCheck className="w-4 h-4 text-cyan/60" />
+                        <span className="text-[0.6rem] uppercase tracking-[0.4em] font-bold text-white/30 font-mono">Secure Intelligence Tunnel 01</span>
+                    </div>
                 </div>
+                <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                />
             </label>
         </div>
     );

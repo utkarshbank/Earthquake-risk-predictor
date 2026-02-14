@@ -9,50 +9,79 @@ interface EarthquakeLayerProps {
 }
 
 const getMagColor = (mag: number) => {
-    if (mag >= 7.0) return '#b91c1c'; // Red-800
-    if (mag >= 6.0) return '#ef4444'; // Red-500
-    if (mag >= 5.0) return '#f97316'; // Orange-500
-    if (mag >= 4.0) return '#eab308'; // Yellow-500
-    if (mag >= 2.5) return '#84cc16'; // Lime-500
-    return '#22c55e'; // Green-500
+    if (mag >= 7.0) return '#ef4444'; // Danger Red
+    if (mag >= 6.0) return '#f97316'; // Warning Orange
+    if (mag >= 5.0) return '#eab308'; // Caution Yellow
+    if (mag >= 4.0) return '#3b82f6'; // Info Blue
+    return '#64748b'; // Muted Slate
 };
 
 const getMagRadius = (mag: number) => {
-    // Logarithmic scale or simply multiplier
-    return Math.max(mag * 2, 4);
+    return Math.max(mag * 2.5, 6);
 };
 
 export default function EarthquakeLayer({ events, onSelectEvent }: EarthquakeLayerProps) {
     return (
         <>
-            {events.map((ev) => (
-                <CircleMarker
-                    key={ev.id}
-                    center={[ev.geometry.coordinates[1], ev.geometry.coordinates[0]]}
-                    pathOptions={{
-                        color: getMagColor(ev.properties.mag),
-                        fillColor: getMagColor(ev.properties.mag),
-                        fillOpacity: 0.6,
-                        weight: 1,
-                    }}
-                    radius={getMagRadius(ev.properties.mag)}
-                    eventHandlers={{
-                        click: () => onSelectEvent?.(ev),
-                    }}
-                >
-                    <Popup>
-                        <div style={{ color: '#000' }}>
-                            <strong>M {ev.properties.mag}</strong> - {ev.properties.place}
-                            <br />
-                            <small>{new Date(ev.properties.time).toLocaleString()}</small>
-                            <br />
-                            <a href={ev.properties.url} target="_blank" rel="noopener noreferrer">
-                                Details
-                            </a>
-                        </div>
-                    </Popup>
-                </CircleMarker>
-            ))}
+            {events.map((ev) => {
+                const color = getMagColor(ev.properties.mag);
+                const isSignificant = ev.properties.mag >= 6.0;
+
+                return (
+                    <CircleMarker
+                        key={ev.id}
+                        center={[ev.geometry.coordinates[1], ev.geometry.coordinates[0]]}
+                        pathOptions={{
+                            color: isSignificant ? '#fff' : color,
+                            fillColor: color,
+                            fillOpacity: 0.5,
+                            weight: isSignificant ? 2 : 1,
+                            className: isSignificant ? 'animate-pulse-slow' : '',
+                        }}
+                        radius={getMagRadius(ev.properties.mag)}
+                        eventHandlers={{
+                            click: () => onSelectEvent?.(ev),
+                        }}
+                    >
+                        <Popup className="premium-popup">
+                            <div className="bg-slate-950 text-slate-200 p-3 rounded-xl border border-white/10 min-w-[200px] shadow-2xl">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-xl font-black italic tracking-tighter" style={{ color }}>
+                                        M {ev.properties.mag}
+                                    </span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 border border-white/5 font-bold uppercase tracking-wider">
+                                        Seismic Event
+                                    </span>
+                                </div>
+
+                                <p className="text-sm font-medium mb-3 leading-snug">
+                                    {ev.properties.place}
+                                </p>
+
+                                <div className="space-y-1 text-[11px] text-slate-400 border-t border-white/5 pt-2">
+                                    <div className="flex justify-between">
+                                        <span>Time</span>
+                                        <span className="text-slate-300">{new Date(ev.properties.time).toLocaleTimeString()}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Depth</span>
+                                        <span className="text-slate-300">{ev.geometry.coordinates[2]} km</span>
+                                    </div>
+                                </div>
+
+                                <a
+                                    href={ev.properties.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="mt-3 block w-full py-2 text-center rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-400 text-xs font-bold hover:bg-blue-600/20 transition-colors"
+                                >
+                                    View Detailed Intel
+                                </a>
+                            </div>
+                        </Popup>
+                    </CircleMarker>
+                );
+            })}
         </>
     );
 }

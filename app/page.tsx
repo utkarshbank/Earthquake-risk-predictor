@@ -6,13 +6,9 @@ import Sidebar from '@/components/Dashboard/Sidebar';
 import { fetchEarthquakes, EarthquakeFeature } from '@/services/usgs';
 
 // Dynamically import Map components to avoid SSR issues with Leaflet
-const MapViewer = dynamic(() => import('@/components/Map/MapViewer'), {
+const GlobeViewer = dynamic(() => import('@/components/Map/GlobeViewer'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-screen bg-slate-900 text-white">Loading Map...</div>,
-});
-
-const EarthquakeLayer = dynamic(() => import('@/components/Map/EarthquakeLayer'), {
-  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-screen bg-ivory text-gold/20 serif tracking-widest uppercase">Initializing Aether...</div>,
 });
 
 export default function Home() {
@@ -26,9 +22,8 @@ export default function Home() {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Safe cast as keys match
         const p = period as 'hour' | 'day' | 'week' | 'month';
-        const m = magnitude as 'all' | '1.0' | '2.5' | '4.5' | 'significant'; // Note: simplified check
+        const m = magnitude as 'all' | '1.0' | '2.5' | '4.5' | 'significant';
 
         const data = await fetchEarthquakes(p, m);
         setEvents(data.features || []);
@@ -43,7 +38,11 @@ export default function Home() {
   }, [period, magnitude]);
 
   return (
-    <main className="relative w-full h-screen overflow-hidden bg-slate-950">
+    <main className="relative w-full h-screen overflow-hidden bg-midnight">
+      {/* Midnight Intelligence Background Glows */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-cyan/5 blur-[180px] rounded-full -z-10" />
+      <div className="absolute bottom-0 right-1/4 w-[700px] h-[700px] bg-gold/3 blur-[180px] rounded-full -z-10" />
+
       <Sidebar
         selectedEvent={selectedEvent}
         totalEvents={events.length}
@@ -54,17 +53,24 @@ export default function Home() {
       />
 
       {loading && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="text-white text-xl font-bold animate-pulse">Fetching Data...</div>
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-midnight/40 backdrop-blur-2xl transition-opacity duration-1000">
+          <div className="flex flex-col items-center gap-6">
+            <div className="relative">
+              <div className="w-16 h-16 border-t-2 border-cyan rounded-full animate-spin shadow-cyan" />
+              <div className="absolute inset-0 w-16 h-16 border border-white/5 rounded-full" />
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <div className="text-cyan text-[0.6rem] tracking-[0.4em] uppercase font-bold glow-cyan px-2">Synchronizing Intelligence</div>
+              <div className="text-white/20 text-[0.5rem] tracking-[0.2em] uppercase font-mono">Satellite Uplink Established</div>
+            </div>
+          </div>
         </div>
       )}
 
-      <MapViewer zoom={3}>
-        <EarthquakeLayer
-          events={events}
-          onSelectEvent={setSelectedEvent}
-        />
-      </MapViewer>
+      <GlobeViewer
+        events={events}
+        onSelectEvent={setSelectedEvent}
+      />
     </main>
   );
 }

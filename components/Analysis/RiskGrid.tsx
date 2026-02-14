@@ -14,14 +14,14 @@ interface RiskGridProps {
 }
 
 const getRiskColor = (score: number) => {
-    if (score > 80) return 'rgba(239, 68, 68, 0.7)'; // Red
-    if (score > 50) return 'rgba(249, 115, 22, 0.7)'; // Orange
-    if (score > 20) return 'rgba(234, 179, 8, 0.6)'; // Yellow
-    return 'rgba(34, 197, 94, 0.4)'; // Green
+    // Midnight Intelligence Palette for Risk
+    if (score > 80) return 'rgba(0, 255, 209, 0.45)'; // Neon Cyan for critical
+    if (score > 50) return 'rgba(212, 175, 55, 0.35)'; // Gold for significant
+    if (score > 20) return 'rgba(113, 113, 122, 0.2)'; // Zinc/Slate
+    return 'rgba(39, 39, 42, 0.15)'; // Near transparent stealth black
 };
 
 export default function RiskGrid({ imageUrl, chunks, rows, cols, opacity, highlightedChunkId, onHover }: RiskGridProps) {
-    // Track internal hover state for direct map interaction
     const [internalHoverId, setInternalHoverId] = useState<string | null>(null);
 
     const handleMouseEnter = (id: string) => {
@@ -36,7 +36,7 @@ export default function RiskGrid({ imageUrl, chunks, rows, cols, opacity, highli
 
     return (
         <div
-            className="relative overflow-hidden rounded-xl shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] border border-slate-800 bg-slate-900"
+            className="relative overflow-hidden rounded-[2.5rem] shadow-2xl border-4 border-white/5 bg-navy-900"
             style={{
                 width: 'fit-content',
                 margin: '0 auto',
@@ -46,7 +46,6 @@ export default function RiskGrid({ imageUrl, chunks, rows, cols, opacity, highli
             }}
         >
             {/* Base Image */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
                 src={imageUrl}
                 alt="Analyzed Map"
@@ -77,60 +76,35 @@ export default function RiskGrid({ imageUrl, chunks, rows, cols, opacity, highli
                     return (
                         <div
                             key={chunk.id}
+                            className="relative cursor-crosshair transition-all duration-700"
                             style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                position: 'relative',
-                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                backgroundColor: getRiskColor(chunk.riskScore),
+                                backgroundColor: isHighlighted ? 'rgba(0, 255, 209, 0.2)' : getRiskColor(chunk.riskScore),
                                 opacity: isHighlighted ? 1 : opacity,
-                                border: isHighlighted ? '3px solid rgba(255,255,255,0.9)' : '0.5px solid rgba(255,255,255,0.15)',
+                                border: isHighlighted ? '2px solid rgba(0, 255, 209, 0.5)' : '1px solid rgba(255,255,255,0.03)',
                                 zIndex: isHighlighted ? 50 : 1,
-                                cursor: 'pointer',
-                                backdropFilter: isHighlighted ? 'blur(2px)' : 'none',
-                                boxSizing: 'border-box'
                             }}
                             onMouseEnter={() => handleMouseEnter(chunk.id)}
                         >
-                            {/* Value Display on Highlight */}
+                            {/* Visual Feedback on Highlight */}
                             {isHighlighted && (
-                                <div style={{
-                                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                    padding: '0.5rem 0.8rem',
-                                    borderRadius: '0.5rem',
-                                    fontSize: '0.9rem',
-                                    fontWeight: '800',
-                                    color: 'white',
-                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)',
-                                    pointerEvents: 'none',
-                                    userSelect: 'none',
-                                    border: '1px solid rgba(255,255,255,0.1)'
-                                }}>
-                                    {chunk.riskScore}%
+                                <div className="absolute inset-0 flex items-center justify-center p-2 backdrop-blur-[2px]">
+                                    <div className="px-5 py-2 rounded-xl bg-navy-900/90 border-2 border-cyan/40 text-[0.7rem] font-bold text-cyan tracking-[0.3em] uppercase shadow-cyan glow-cyan font-mono">
+                                        INTEL {chunk.riskScore}%
+                                    </div>
                                 </div>
                             )}
 
-                            {/* Visual Feedback for Critical Risk */}
+                            {/* Signal Pulses for high risk */}
                             {chunk.riskScore > 80 && !isHighlighted && (
-                                <div style={{
-                                    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                                    fontSize: '1.2rem'
-                                }}>
-                                    ⚠️
-                                </div>
+                                <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-cyan shadow-cyan animate-pulse" />
+                            )}
+                            {chunk.riskScore > 50 && chunk.riskScore <= 80 && !isHighlighted && (
+                                <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-gold shadow-gold opacity-50" />
                             )}
                         </div>
                     );
                 })}
             </div>
-
-            <style jsx>{`
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; transform: scale(1); }
-                    50% { opacity: 0.5; transform: scale(0.9); }
-                }
-            `}</style>
         </div>
     );
 }

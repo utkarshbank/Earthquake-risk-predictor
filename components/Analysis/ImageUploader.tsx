@@ -12,8 +12,12 @@ export default function ImageUploader({ onImageSelected }: ImageUploaderProps) {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const url = URL.createObjectURL(file);
-            onImageSelected(url);
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const url = event.target?.result as string;
+                onImageSelected(url);
+            };
+            reader.readAsDataURL(file);
         }
     };
 

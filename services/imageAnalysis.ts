@@ -91,8 +91,9 @@ async function getGeminiAnalysis(imageUrl: string, location?: string): Promise<a
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }, { apiVersion: 'v1beta' });
         const base64Data = imageUrl.split(",")[1];
+        const mimeType = imageUrl.split(";")[0].split(":")[1] || "image/png";
 
         const locationContext = location ? `The user has specified the location as: ${location}. ` : "";
         const prompt = `
@@ -109,7 +110,7 @@ async function getGeminiAnalysis(imageUrl: string, location?: string): Promise<a
 
         const result = await model.generateContent([
             prompt,
-            { inlineData: { data: base64Data, mimeType: "image/png" } }
+            { inlineData: { data: base64Data, mimeType } }
         ]);
 
         const response = await result.response;

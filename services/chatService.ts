@@ -55,6 +55,7 @@ export const getSeismicChatResponse = async (
         return response.text();
     } catch (error: any) {
         console.error("Seismic Chat error:", error);
-        return `❌ **Seismic Chat Error:** ${error.message || "Unknown error"}\n\nPlease check your API key and project status in the Google Cloud Console.`;
+        const detailedError = error.message || "Unknown error";
+        return `❌ **Seismic Chat Error:** ${detailedError}\n\nThis could be a quota limit (429) or a model specific issue with gemini-2.5-flash. Please check your console for logs.`;
     }
 };

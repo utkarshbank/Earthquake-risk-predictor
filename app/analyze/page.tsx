@@ -4,6 +4,7 @@ import { useState } from 'react';
 import ImageUploader from '@/components/Analysis/ImageUploader';
 import { analyzeMapImage, AnalysisResult } from '@/services/imageAnalysis';
 import ReportOverlay from '@/components/Analysis/ReportOverlay';
+import SeismicChatbot from '@/components/Analysis/SeismicChatbot';
 
 export default function AnalysisPage() {
     const [image, setImage] = useState<string | null>(null);
@@ -36,7 +37,12 @@ export default function AnalysisPage() {
     return (
         <div style={{ minHeight: '100vh', backgroundColor: '#020617', color: 'white', padding: '2rem' }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                <header style={{ marginBottom: '3rem', textAlign: 'center' }}>
+                <header style={{ marginBottom: '3rem', textAlign: 'center', position: 'relative' }}>
+                    <div style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)' }}>
+                        <a href="/" style={{ color: '#94a3b8', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', transition: 'color 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.color = 'white'} onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
+                            <span>←</span> Global Map Dashboard
+                        </a>
+                    </div>
                     <h1 style={{ fontSize: '3rem', fontWeight: '900', letterSpacing: '-0.02em', marginBottom: '0.5rem', background: 'linear-gradient(to right, #818cf8, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                         Earthquake Risk Predictor
                     </h1>
@@ -241,6 +247,11 @@ export default function AnalysisPage() {
                     />
                 )}
             </div>
+
+            {/* Persistent AI Companion */}
+            {result && (
+                <SeismicChatbot reportContext={result.reportData} region={result.detectedRegion} />
+            )}
         </div>
     );
 }

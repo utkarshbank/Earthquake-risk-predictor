@@ -21,12 +21,17 @@ export default function Sidebar({
 }: SidebarProps) {
     return (
         <div className="sidebar glass">
-            <h1 className="text-2xl font-bold mb-2" style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>QuakeWatch</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
+                <a href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <h1 className="text-2xl font-bold" style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>QuakeWatch</h1>
+                </a>
+                <span style={{ fontSize: '0.7rem', color: '#64748b' }}>v1.2</span>
+            </div>
 
             {/* Navigation to Analysis */}
-            <div style={{ marginBottom: '1rem' }}>
-                <a href="/analyze" className="btn-primary">
-                    <span style={{ marginRight: '0.5rem' }}>🗺️</span> Upload & Analyze Map
+            <div style={{ marginBottom: '1.5rem' }}>
+                <a href="/analyze" className="btn-primary" style={{ display: 'block', textDecoration: 'none', textAlign: 'center', transition: 'transform 0.2s ease' }}>
+                    <span style={{ marginRight: '0.5rem' }}>🗺️</span> Map Analysis Tool
                 </a>
             </div>
 

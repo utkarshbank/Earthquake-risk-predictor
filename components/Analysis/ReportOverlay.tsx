@@ -231,11 +231,9 @@ export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, reg
                 }}>
                     <h4 style={{ color: '#818cf8', fontSize: '1.1rem', marginBottom: '1rem' }}>Executive Summary</h4>
                     <p style={{ color: '#e2e8f0', lineHeight: '1.8', fontSize: '1.05rem' }}>
-                        The model indicates a synergistic risk profile where geological volatility and structural vulnerability intersect. Continuous monitoring of seismic wave propagation is recommended. The current data sugerests a localized reinforcement strategy to mitigate higher-order tectonic impacts.
+                        The model indicates a synergistic risk profile where geological volatility and structural vulnerability intersect. Continuous monitoring of seismic wave propagation is recommended.
                     </p>
                 </div>
-
-                <SeismicChatbot reportContext={data} region={region} />
             </div>
         </div>
     );

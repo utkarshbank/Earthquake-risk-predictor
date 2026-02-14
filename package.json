@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@types/three": "^0.182.0",
     "axios": "^1.13.5",
     "clsx": "^2.1.1",
@@ -19,7 +20,9 @@
     "react-dom": "19.2.3",
     "react-globe.gl": "^2.37.0",
     "react-leaflet": "^5.0.0",
+    "recharts": "^3.7.0",
     "tailwind-merge": "^3.4.0",
+    "tesseract.js": "^7.0.0",
     "three": "^0.182.0"
   },
   "devDependencies": {

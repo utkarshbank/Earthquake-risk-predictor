@@ -8,17 +8,24 @@ import {
     ShieldAlert,
     Activity,
     ChevronRight,
-    Info,
     Scan,
     RefreshCcw,
     MapPin,
     Zap,
-    Cpu
+    Cpu,
+    Settings as SettingsIcon,
+    Map as MapIcon,
+    Clock,
+    BarChart3,
+    TrendingUp,
+    Layout
 } from 'lucide-react';
 import Link from 'next/link';
 import ImageUploader from '@/components/Analysis/ImageUploader';
 import RiskGrid from '@/components/Analysis/RiskGrid';
 import { analyzeMapImage, AnalysisResult } from '@/services/imageAnalysis';
+import ReportOverlay from '@/components/Analysis/ReportOverlay';
+import SeismicChatbot from '@/components/Analysis/SeismicChatbot';
 
 export default function AnalysisPage() {
     const [image, setImage] = useState<string | null>(null);
@@ -27,6 +34,7 @@ export default function AnalysisPage() {
     const [gridOpacity, setGridOpacity] = useState(0.4);
     const [location, setLocation] = useState('');
     const [hoveredChunk, setHoveredChunk] = useState<string | null>(null);
+    const [isReportOpen, setIsReportOpen] = useState(false);
 
     const handleImageSelected = (imgUrl: string) => {
         setImage(imgUrl);
@@ -341,9 +349,18 @@ export default function AnalysisPage() {
                                                         className="absolute inset-0 w-full opacity-0 cursor-pointer"
                                                     />
                                                 </div>
+
+                                                <button
+                                                    onClick={() => setIsReportOpen(true)}
+                                                    className="w-full btn-cyan py-5 text-[0.7rem] tracking-[0.4em] uppercase font-bold flex items-center justify-center gap-4 shadow-cyan"
+                                                >
+                                                    <Activity className="w-5 h-5" />
+                                                    View Full Analysis Report
+                                                </button>
+
                                                 <button
                                                     onClick={reset}
-                                                    className="w-full mt-10 flex items-center justify-center gap-4 group text-[0.65rem] font-bold uppercase tracking-[0.4em] text-cyan/30 hover:text-cyan transition-all py-6 rounded-[2rem] border border-cyan/10 hover:bg-cyan/5 shadow-inner"
+                                                    className="w-full flex items-center justify-center gap-4 group text-[0.65rem] font-bold uppercase tracking-[0.4em] text-cyan/30 hover:text-cyan transition-all py-6 rounded-[2rem] border border-cyan/10 hover:bg-cyan/5 shadow-inner"
                                                 >
                                                     <RefreshCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-1000" />
                                                     Re-Sync Protocol
@@ -367,6 +384,22 @@ export default function AnalysisPage() {
                         </div>
                     </motion.div>
                 </div>
+
+                {/* Full Report Overlay */}
+                {result && (
+                    <ReportOverlay
+                        isOpen={isReportOpen}
+                        onClose={() => setIsReportOpen(false)}
+                        data={result.reportData}
+                        isAiVerified={result.isAiVerified}
+                        region={result.detectedRegion}
+                    />
+                )}
+
+                {/* Persistent AI Companion */}
+                {result && (
+                    <SeismicChatbot reportContext={result.reportData} region={result.detectedRegion} />
+                )}
             </div>
         </main>
     );

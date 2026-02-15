@@ -25,9 +25,11 @@ import ImageUploader from '@/components/Analysis/ImageUploader';
 import RiskGrid from '@/components/Analysis/RiskGrid';
 import { analyzeMapImage, AnalysisResult } from '@/services/imageAnalysis';
 import ReportOverlay from '@/components/Analysis/ReportOverlay';
-import SeismicChatbot from '@/components/Analysis/SeismicChatbot';
+import RiskChatbot from '@/components/Analysis/SeismicChatbot';
+import { useHazard } from '@/context/HazardContext';
 
 export default function AnalysisPage() {
+    const { hazard, theme } = useHazard();
     const [image, setImage] = useState<string | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -35,6 +37,7 @@ export default function AnalysisPage() {
     const [location, setLocation] = useState('');
     const [hoveredChunk, setHoveredChunk] = useState<string | null>(null);
     const [isReportOpen, setIsReportOpen] = useState(false);
+    const [analysisError, setAnalysisError] = useState<'QUOTA_EXCEEDED' | 'API_ERROR' | null>(null);
 
     const handleImageSelected = (imgUrl: string) => {
         setImage(imgUrl);
@@ -44,11 +47,16 @@ export default function AnalysisPage() {
     const startAnalysis = async () => {
         if (!image) return;
         setIsAnalyzing(true);
+        setAnalysisError(null);
         try {
-            const data = await analyzeMapImage(image, 3, 3, location);
+            const data = await analyzeMapImage(image, hazard, 3, 3, location);
             setResult(data);
+            if (data.errorCode) {
+                setAnalysisError(data.errorCode as any);
+            }
         } catch (err) {
             console.error(err);
+            setAnalysisError('API_ERROR');
         } finally {
             setIsAnalyzing(false);
         }
@@ -88,6 +96,7 @@ export default function AnalysisPage() {
                             <h1 className="text-5xl serif text-white tracking-widest font-light uppercase">
                                 Risk <span className="text-cyan glow-cyan italic">Lab</span>
                             </h1>
+                            <p className="text-[0.6rem] text-cyan/40 uppercase tracking-[0.4em] font-bold mt-2 font-mono">{theme.label} Protocols Active</p>
                         </div>
                     </motion.div>
 
@@ -134,15 +143,38 @@ export default function AnalysisPage() {
                                         >
                                             <div className="relative rounded-[2rem] overflow-hidden shadow-2xl group/img border-4 border-white/5 bg-midnight p-2">
                                                 {result ? (
-                                                    <RiskGrid
-                                                        imageUrl={image}
-                                                        chunks={result.chunks}
-                                                        rows={3}
-                                                        cols={3}
-                                                        opacity={gridOpacity}
-                                                        highlightedChunkId={hoveredChunk}
-                                                        onHover={setHoveredChunk}
-                                                    />
+                                                    <div className="relative">
+                                                        <RiskGrid
+                                                            imageUrl={image}
+                                                            chunks={result.chunks}
+                                                            rows={3}
+                                                            cols={3}
+                                                            opacity={gridOpacity}
+                                                            highlightedChunkId={hoveredChunk}
+                                                            onHover={setHoveredChunk}
+                                                        />
+                                                        {analysisError === 'QUOTA_EXCEEDED' && (
+                                                            <motion.div
+                                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                                animate={{ opacity: 1, scale: 1 }}
+                                                                className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] w-[80%] px-8 py-5 rounded-[1.5rem] bg-navy-900/90 border border-gold/40 backdrop-blur-3xl shadow-2xl flex items-center gap-6"
+                                                            >
+                                                                <div className="w-12 h-12 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center shrink-0">
+                                                                    <Zap className="w-5 h-5 text-gold animate-pulse" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <p className="text-[0.6rem] font-bold text-gold uppercase tracking-[0.3em] mb-1">Satellite Link: Saturated</p>
+                                                                    <p className="text-[0.7rem] leading-relaxed text-white/70 font-sans">
+                                                                        Free tier bandwidth exhausted. Switched to <span className="text-white font-bold italic">Aether Local Vision</span> telemetry.
+                                                                        AI verification node offline for ~10 seconds.
+                                                                    </p>
+                                                                </div>
+                                                                <button className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/20 text-[0.55rem] font-bold text-gold uppercase tracking-widest hover:bg-gold/20 transition-all">
+                                                                    Go Pro
+                                                                </button>
+                                                            </motion.div>
+                                                        )}
+                                                    </div>
                                                 ) : (
                                                     // eslint-disable-next-line @next/next/no-img-element
                                                     <img src={image} alt="Upload Preview" className="max-h-[65vh] w-auto object-contain rounded-2xl" />
@@ -296,9 +328,9 @@ export default function AnalysisPage() {
 
                                                                 <div className="space-y-8 border-t border-white/5 pt-8">
                                                                     {[
-                                                                        { label: "SUBSURFACE GEOLOGY", val: hoveredData.details.geological },
-                                                                        { label: "STRUCTURAL PROTOCOLS", val: hoveredData.details.structural },
-                                                                        { label: "SOCIO-URBAN IMPACT", val: hoveredData.details.urban }
+                                                                        { label: hazard === 'seismic' ? "SUBSURFACE GEOLOGY" : hazard === 'wildfire' ? "FUEL DENSITY" : "HYDROLOGIC LOAD", val: hoveredData.details.prime },
+                                                                        { label: hazard === 'seismic' ? "STRUCTURAL PROTOCOLS" : hazard === 'wildfire' ? "TOPOGRAPHIC SLOPE" : "AERODYNAMIC VULN", val: hoveredData.details.secondary },
+                                                                        { label: hazard === 'seismic' ? "SOCIO-URBAN IMPACT" : hazard === 'wildfire' ? "INFRASTRUCTURE GAP" : "RESI-EGRESS PROTO", val: hoveredData.details.tertiary }
                                                                     ].map((item, i) => (
                                                                         <div key={i} className="space-y-2">
                                                                             <p className="text-[0.5rem] uppercase font-bold text-white/20 tracking-[0.4em] font-mono">{item.label}</p>
@@ -376,10 +408,12 @@ export default function AnalysisPage() {
                         <div className="elegant-panel p-8 bg-cyan/[0.02] flex gap-8 items-center border-cyan/10 shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-cyan/5 blur-3xl rounded-full -z-10" />
                             <div className="w-14 h-14 rounded-full border border-cyan/20 flex items-center justify-center text-cyan shadow-cyan bg-midnight shrink-0">
-                                <ShieldAlert className="w-6 h-6" />
+                                {result?.isAiVerified ? <ShieldAlert className="w-6 h-6" /> : <Activity className="w-6 h-6 text-gold" />}
                             </div>
                             <p className="text-[0.65rem] leading-relaxed text-white/40 uppercase font-bold tracking-[0.3em] font-mono">
-                                Intelligence stream synchronized with real-time neural extraction and historical seismic force records.
+                                {result?.isAiVerified
+                                    ? "Intelligence stream synchronized with real-time neural extraction and historical records."
+                                    : "Operating on Local Vision telemetry. AI verification node is currently throttled due to bandwidth constraints."}
                             </p>
                         </div>
                     </motion.div>
@@ -398,7 +432,7 @@ export default function AnalysisPage() {
 
                 {/* Persistent AI Companion */}
                 {result && (
-                    <SeismicChatbot reportContext={result.reportData} region={result.detectedRegion} />
+                    <RiskChatbot reportContext={result.reportData} region={result.detectedRegion} />
                 )}
             </div>
         </main>

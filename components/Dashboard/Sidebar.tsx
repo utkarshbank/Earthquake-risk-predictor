@@ -1,6 +1,6 @@
 'use client';
 
-import { EarthquakeFeature } from '@/services/usgs';
+import { HazardEvent } from '@/services/hazardEvents';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Activity,
@@ -11,9 +11,11 @@ import {
     TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
+import { useHazard, HazardType } from '@/context/HazardContext';
+import { Flame, CloudLightning, Shield } from 'lucide-react';
 
 interface SidebarProps {
-    selectedEvent: EarthquakeFeature | null;
+    selectedEvent: HazardEvent | null;
     totalEvents: number;
     period: string;
     magnitude: string;
@@ -29,6 +31,13 @@ export default function Sidebar({
     onPeriodChange,
     onMagChange,
 }: SidebarProps) {
+    const { hazard, setHazard, theme } = useHazard();
+
+    const hazards: { id: HazardType; label: string; icon: any; color: string }[] = [
+        { id: 'seismic', label: 'Seismic', icon: Activity, color: 'var(--seismic-cyan)' },
+        { id: 'wildfire', label: 'Wildfire', icon: Flame, color: 'var(--wildfire-lava)' },
+        { id: 'storm', label: 'Storm', icon: CloudLightning, color: 'var(--storm-torrent)' }
+    ];
     return (
         <motion.div
             initial={{ x: -100, opacity: 0 }}
@@ -39,9 +48,26 @@ export default function Sidebar({
             <div className="elegant-panel p-6 border-white/5 bg-navy-900/40">
                 <div className="flex items-center justify-between mb-2">
                     <h1 className="text-3xl serif text-white tracking-widest font-light uppercase">Aether</h1>
-                    <div className="px-2.5 py-1 rounded bg-cyan/10 border border-cyan/20 text-[0.55rem] text-cyan uppercase tracking-[0.3em] font-bold glow-cyan">Live Link</div>
+                    <div className="px-2.5 py-1 rounded bg-cyan/10 border-cyan/20 text-[0.55rem] text-cyan uppercase tracking-[0.3em] font-bold glow-cyan">Live Link</div>
                 </div>
-                <p className="text-[0.6rem] text-white/30 uppercase tracking-[0.4em] font-medium font-mono">Global Seismic Protocol</p>
+                <p className="text-[0.6rem] text-white/30 uppercase tracking-[0.4em] font-medium font-mono">{theme.label} Protocol</p>
+            </div>
+
+            {/* Hazard Selector */}
+            <div className="elegant-panel p-2 flex gap-1 border-white/5 bg-navy-900/40">
+                {hazards.map((h) => (
+                    <button
+                        key={h.id}
+                        onClick={() => setHazard(h.id)}
+                        className={`flex-1 flex flex-col items-center gap-2 py-4 rounded-3xl transition-all duration-500 ${hazard === h.id
+                            ? 'bg-cyan/10 border border-cyan/30 text-cyan shadow-cyan'
+                            : 'text-white/20 hover:text-white/40 hover:bg-white/5 border border-transparent'
+                            }`}
+                    >
+                        <h.icon className="w-5 h-5" />
+                        <span className="text-[0.5rem] uppercase tracking-[0.2em] font-bold">{h.label}</span>
+                    </button>
+                ))}
             </div>
 
             {/* Controls & Nav */}
@@ -82,9 +108,9 @@ export default function Sidebar({
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center justify-between">
                             <label className="text-[0.6rem] uppercase tracking-[0.3em] text-white/20 font-bold flex items-center gap-2">
-                                <Activity className="w-3.5 h-3.5" /> Force Filter
+                                <Activity className="w-3.5 h-3.5" /> {hazard === 'seismic' ? 'Force' : 'Intensity'} Filter
                             </label>
-                            <span className="text-[0.6rem] text-cyan uppercase font-bold tracking-widest font-mono glow-cyan">M{magnitude}+</span>
+                            <span className="text-[0.6rem] text-cyan uppercase font-bold tracking-widest font-mono glow-cyan">{hazard === 'seismic' ? 'M' : 'I'}{magnitude}+</span>
                         </div>
                         <select
                             value={magnitude}
@@ -92,9 +118,9 @@ export default function Sidebar({
                             className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-[0.65rem] text-white/70 focus:outline-none focus:border-cyan/40 transition-all cursor-pointer appearance-none uppercase tracking-widest font-bold"
                         >
                             <option value="all">Full Spectrum</option>
-                            <option value="1.0">Magnitude 1.0+</option>
-                            <option value="2.5">Magnitude 2.5+</option>
-                            <option value="4.5">Magnitude 4.5+</option>
+                            <option value="1.0">{hazard === 'seismic' ? 'Magnitude 1.0+' : 'Intensity 0.1+'}</option>
+                            <option value="2.5">{hazard === 'seismic' ? 'Magnitude 2.5+' : 'Intensity 0.25+'}</option>
+                            <option value="4.5">{hazard === 'seismic' ? 'Magnitude 4.5+' : 'Intensity 0.45+'}</option>
                             <option value="significant">Critical Only</option>
                         </select>
                     </div>
@@ -130,16 +156,18 @@ export default function Sidebar({
                             <div className="absolute top-0 right-0 w-32 h-32 bg-cyan/5 blur-3xl rounded-full" />
                             <div className="relative z-10">
                                 <div className="flex justify-between items-start mb-5">
-                                    <div className="px-3 py-1 rounded bg-cyan/10 border border-cyan/20 text-[0.5rem] text-cyan uppercase tracking-[0.3em] font-bold">Signal Intel</div>
+                                    <div className="px-3 py-1 rounded bg-cyan/10 border border-cyan/20 text-[0.5rem] text-cyan uppercase tracking-[0.3em] font-bold">Live Intelligence</div>
                                     <TrendingUp className="w-4 h-4 text-cyan/40" />
                                 </div>
                                 <h3 className="text-sm text-white/90 font-medium mb-4 leading-relaxed font-sans">
-                                    {selectedEvent.properties.place}
+                                    {selectedEvent.label}
                                 </h3>
                                 <div className="flex items-end gap-3 pt-4 border-t border-white/5">
-                                    <span className="text-4xl serif text-cyan leading-none glow-cyan">{selectedEvent.properties.mag}</span>
+                                    <span className="text-4xl serif text-cyan leading-none glow-cyan">{selectedEvent.magnitude}</span>
                                     <div className="flex flex-col">
-                                        <span className="text-[0.5rem] text-white/20 uppercase tracking-[0.3em] font-bold font-mono">Magnitude</span>
+                                        <span className="text-[0.5rem] text-white/20 uppercase tracking-[0.3em] font-bold font-mono">
+                                            {hazard === 'seismic' ? 'Magnitude' : 'Intensity'}
+                                        </span>
                                         <span className="text-[0.5rem] text-cyan/30 uppercase tracking-[0.2em] font-bold font-mono italic">Spectral verified</span>
                                     </div>
                                 </div>

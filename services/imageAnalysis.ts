@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+export type HazardType = 'seismic' | 'wildfire' | 'storm';
+
 export interface GridChunk {
     id: string;
     row: number;
@@ -8,17 +10,19 @@ export interface GridChunk {
     riskLevel: 'Low' | 'Moderate' | 'High' | 'Critical';
     reason: string;
     details: {
-        geological: string;
-        structural: string;
-        urban: string;
+        prime: string;   // Primary factor (e.g., Geology for seismic, Fuel for fire)
+        secondary: string; // Secondary factor (e.g., Structure for seismic, Topography for fire)
+        tertiary: string;  // Tertiary factor (e.g., Urban for seismic, Weather for fire)
     };
 }
 
 export interface ReportData {
-    temporalTrend: { time: string; strain: number; activity: number }[];
-    magnitudeDist: { magnitude: number; probability: number }[];
+    temporalTrend: { time: string; value1: number; value2: number }[]; // Generic names
+    magnitudeDist: { label: number | string; probability: number }[]; // Generic names
     factorComparison: { name: string; value: number }[];
     justification?: string;
+    unit1?: string; // Unit for value1
+    unit2?: string; // Unit for value2
 }
 
 export interface AnalysisResult {
@@ -28,6 +32,7 @@ export interface AnalysisResult {
     reportData: ReportData;
     isAiVerified: boolean;
     detectedRegion?: string;
+    errorCode?: 'QUOTA_EXCEEDED' | 'API_ERROR' | 'UNKNOWN';
 }
 
 /**
@@ -85,50 +90,80 @@ const samplePixelRisk = (ctx: CanvasRenderingContext2D, x: number, y: number, w:
     return calculateColorRisk(r / count, g / count, b / count);
 };
 
-async function getGeminiAnalysis(imageUrl: string, location?: string): Promise<any> {
+async function getGeminiAnalysis(imageUrl: string, hazard: HazardType, location?: string): Promise<{ data: any; error?: 'QUOTA_EXCEEDED' | 'API_ERROR' }> {
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    if (!apiKey) return null;
+    if (!apiKey) return { data: null };
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" }, { apiVersion: 'v1beta' });
         const base64Data = imageUrl.split(",")[1];
+        const mimeType = imageUrl.split(";")[0].split(":")[1] || "image/png";
 
         const locationContext = location ? `The user has specified the location as: ${location}. ` : "";
+
+        let hazardPrompt = "";
+        if (hazard === 'seismic') {
+            hazardPrompt = `Perform a deep seismic analysis. 
+            "temporalTrend": 12 objects {"year": string, "strain": number, "activity": number}.
+            "magnitudeDist": 7 objects {"mag": number, "freq": number} (M3.0 to M9.0).
+            "factors": {"geo": number, "struc": number, "urb": number}.`;
+        } else if (hazard === 'wildfire') {
+            hazardPrompt = `Perform a deep wildfire risk analysis. 
+            "temporalTrend": 12 objects {"year": string, "fuelMoisture": number, "ignitionRisk": number}.
+            "magnitudeDist": 7 objects {"intensity": string, "freq": number} (Low to Extreme).
+            "factors": {"fuel": number, "topo": number, "weather": number}.`;
+        } else {
+            hazardPrompt = `Perform a deep storm/flood risk analysis. 
+            "temporalTrend": 12 objects {"hour": string, "precip": number, "wind": number}.
+            "magnitudeDist": 7 objects {"category": string, "freq": number} (TS to CAT5).
+            "factors": {"hydro": number, "aero": number, "infras": number}.`;
+        }
+
         const prompt = `
-            ${locationContext}Perform a deep seismic analysis of this hazard map.
+            ${locationContext}${hazardPrompt}
             Deliver a JSON object with:
             1. "region": Specific geographical area.
             2. "hazardLevel": Average risk as an integer (0-100).
             3. "grid": A 1D array of 9 integers representing the 3x3 grid risk scores (top-left to bottom-right).
-            4. "justification": Scientific reasoning for the risk levels shown (max 3 sentences).
-            5. "temporalTrend": An array of 12 objects: {"year": string, "strain": number, "activity": number} reflecting the REAL historical/projected trend for this region.
-            6. "magnitudeDist": An array of 7 objects: {"mag": number, "freq": number} following the Gutenberg-Richter recurrence for this specific region for magnitudes M3.0 to M9.0.
-            7. "factors": {"geo": number, "struc": number, "urb": number} as 0-100 intensity scores.
+            4. "justification": Scientific reasoning for the risk levels (max 3 sentences).
+            5. "temporalTrend": As specified above.
+            6. "magnitudeDist": As specified above.
+            7. "factors": As specified above.
         `;
 
         const result = await model.generateContent([
             prompt,
-            { inlineData: { data: base64Data, mimeType: "image/png" } }
+            { inlineData: { data: base64Data, mimeType } }
         ]);
 
-        const response = await result.response;
+        const response = result.response;
         const text = response.text();
+        if (!text) return { data: null };
+
         const jsonMatch = text.match(/\{[\s\S]*\}/);
-        return jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-    } catch (err) {
-        console.error("Gemini context extraction failed:", err);
-        return null;
+        return { data: jsonMatch ? JSON.parse(jsonMatch[0]) : null };
+    } catch (err: any) {
+        // Broad capture for all API/SDK errors
+        const errorString = String(err);
+        const isQuota = errorString.includes('429') || errorString.toLowerCase().includes('quota');
+
+        if (isQuota) {
+            return { data: null, error: 'QUOTA_EXCEEDED' };
+        }
+        console.error("Gemini Analysis Error:", errorString);
+        return { data: null, error: 'API_ERROR' };
     }
 }
 
 export const analyzeMapImage = async (
     imageUrl: string,
+    hazard: HazardType,
     rows: number = 3,
     cols: number = 3,
     location?: string
 ): Promise<AnalysisResult> => {
-    const geminiDataPromise = getGeminiAnalysis(imageUrl, location);
+    const geminiDataPromise = getGeminiAnalysis(imageUrl, hazard, location);
 
     const visionResult = await new Promise<any>((resolve, reject) => {
         const img = new Image();
@@ -159,7 +194,7 @@ export const analyzeMapImage = async (
         img.src = imageUrl;
     });
 
-    const gemini = await geminiDataPromise;
+    const { data: gemini, error } = await geminiDataPromise;
     const isAiVerified = !!gemini;
 
     // Default simulation fallback
@@ -177,20 +212,78 @@ export const analyzeMapImage = async (
     const finalizedChunks: GridChunk[] = visionResult.chunks.map((v: any, i: number) => {
         const score = finalizeValue(i, v.riskScore);
         const level = score > 80 ? 'Critical' : score > 50 ? 'High' : score > 20 ? 'Moderate' : 'Low';
+
+        let details = { prime: "", secondary: "", tertiary: "" };
+        if (hazard === 'seismic') {
+            details = {
+                prime: "Lithospheric stress detected via HSL-spectral sampling.",
+                secondary: "Calculated structural vulnerability based on urban density.",
+                tertiary: "Proximity-based exposure index."
+            };
+        } else if (hazard === 'wildfire') {
+            details = {
+                prime: "Fuel density and biomass moisture analysis.",
+                secondary: "Topographic slope and wind funnel detection.",
+                tertiary: "Infrastructure defensible space assessment."
+            };
+        } else {
+            details = {
+                prime: "Hydrologic saturation and drainage capacity.",
+                secondary: "Aerodynamic wind load vulnerability.",
+                tertiary: "Emergency egress and infrastructure resilience."
+            };
+        }
+
         return {
             ...v,
             riskScore: score,
             riskLevel: level,
-            reason: isAiVerified ? gemini.justification : "Localized visual telemetry indicates moderate seismic strain.",
-            details: {
-                geological: "Lithospheric stress detected via HSL-spectral sampling.",
-                structural: "Calculated structural vulnerability based on urban density.",
-                urban: "Proximity-based exposure index."
-            }
+            reason: isAiVerified ? gemini.justification : `Localized visual telemetry indicates moderate ${hazard} risk.`,
+            details
         };
     });
 
     const avgRisk = isAiVerified ? gemini.hazardLevel : visionResult.totalRisk;
+
+    let temporalTrend = mockTrend.map(t => ({ time: t.time, value1: t.strain, value2: t.activity }));
+    let magnitudeDist = [3, 4, 5, 6, 7, 8, 9].map(m => ({ label: m, probability: parseFloat((100 / Math.pow(2.5, m - 3)).toFixed(2)) }));
+    let factorComparison = isAiVerified && gemini.factors ? [] : [
+        { name: 'Primary', value: Math.round(avgRisk * 0.9) },
+        { name: 'Secondary', value: 45 },
+        { name: 'Tertiary', value: 30 }
+    ];
+
+    if (hazard === 'seismic') {
+        if (isAiVerified) {
+            temporalTrend = gemini.temporalTrend.map((t: any) => ({ time: t.year, value1: t.strain, value2: t.activity }));
+            magnitudeDist = gemini.magnitudeDist.map((m: any) => ({ label: m.mag, probability: m.freq }));
+            factorComparison = [
+                { name: 'Geological', value: gemini.factors.geo },
+                { name: 'Structural', value: gemini.factors.struc },
+                { name: 'Urban', value: gemini.factors.urb }
+            ];
+        }
+    } else if (hazard === 'wildfire') {
+        if (isAiVerified) {
+            temporalTrend = gemini.temporalTrend.map((t: any) => ({ time: t.year, value1: t.fuelMoisture, value2: t.ignitionRisk }));
+            magnitudeDist = gemini.magnitudeDist.map((m: any) => ({ label: m.intensity, probability: m.freq }));
+            factorComparison = [
+                { name: 'Fuel', value: gemini.factors.fuel },
+                { name: 'Topo', value: gemini.factors.topo },
+                { name: 'Weather', value: gemini.factors.weather }
+            ];
+        }
+    } else {
+        if (isAiVerified) {
+            temporalTrend = gemini.temporalTrend.map((t: any) => ({ time: t.hour, value1: t.precip, value2: t.wind }));
+            magnitudeDist = gemini.magnitudeDist.map((m: any) => ({ label: m.category, probability: m.freq }));
+            factorComparison = [
+                { name: 'Hydro', value: gemini.factors.hydro },
+                { name: 'Aero', value: gemini.factors.aero },
+                { name: 'Infras', value: gemini.factors.infras }
+            ];
+        }
+    }
 
     return {
         chunks: finalizedChunks,
@@ -198,27 +291,14 @@ export const analyzeMapImage = async (
         highRiskCount: finalizedChunks.filter(c => c.riskScore > 50).length,
         isAiVerified,
         detectedRegion: gemini?.region || "Local Vision Analysis",
+        errorCode: error,
         reportData: {
-            temporalTrend: isAiVerified && gemini.temporalTrend ? gemini.temporalTrend.map((t: any) => ({ time: t.year, strain: t.strain, activity: t.activity })) : mockTrend,
-            magnitudeDist: isAiVerified && gemini.magnitudeDist
-                ? gemini.magnitudeDist.map((m: any) => ({
-                    magnitude: m.mag,
-                    probability: parseFloat(Number(m.freq).toFixed(2))
-                }))
-                : [3, 4, 5, 6, 7, 8, 9].map(m => ({
-                    magnitude: m,
-                    probability: parseFloat((100 / Math.pow(2.5, m - 3)).toFixed(2))
-                })),
-            factorComparison: isAiVerified && gemini.factors ? [
-                { name: 'Geological', value: gemini.factors.geo },
-                { name: 'Structural', value: gemini.factors.struc },
-                { name: 'Urban', value: gemini.factors.urb }
-            ] : [
-                { name: 'Geological', value: Math.round(avgRisk * 0.9) },
-                { name: 'Structural', value: 45 },
-                { name: 'Urban', value: 30 }
-            ],
-            justification: gemini?.justification
+            temporalTrend,
+            magnitudeDist,
+            factorComparison,
+            justification: gemini?.justification,
+            unit1: hazard === 'seismic' ? 'Strain' : hazard === 'wildfire' ? 'Fuel' : 'Precip',
+            unit2: hazard === 'seismic' ? 'Activity' : hazard === 'wildfire' ? 'Ignition' : 'Wind'
         }
     };
 };

@@ -7,12 +7,26 @@
   --color-midnight: #0B0E14;
   --color-navy-900: #121721;
   --color-navy-800: #1A2230;
-  --color-cyan: #00FFD1;
-  --color-gold: #D4AF37;
+
+  /* Adaptive Hazard Tokens */
+  --hazard-accent: var(--seismic-cyan);
+  --hazard-secondary: var(--seismic-gold);
+  --hazard-glow: rgba(0, 255, 209, 0.4);
+  --hazard-shadow: 0 0 25px rgba(0, 255, 209, 0.2);
+
+  /* Seismic (Default) */
+  --seismic-cyan: #00FFD1;
+  --seismic-gold: #D4AF37;
+
+  /* Wildfire (Ember) */
+  --wildfire-lava: #FF4D00;
+  --wildfire-amber: #FFB302;
+
+  /* Storm (Torrent) */
+  --storm-torrent: #00D1FF;
+  --storm-foam: #E0F2F1;
 
   --shadow-elegant: 0 20px 50px -12px rgba(0, 0, 0, 0.8);
-  --shadow-cyan: 0 0 25px rgba(0, 255, 209, 0.2);
-  --shadow-gold: 0 0 20px rgba(212, 175, 55, 0.15);
 
   --animate-shimmer: shimmer 2s linear infinite;
 
@@ -27,19 +41,40 @@
   }
 }
 
+[data-hazard="seismic"] {
+  --hazard-accent: var(--seismic-cyan);
+  --hazard-secondary: var(--seismic-gold);
+  --hazard-glow: rgba(0, 255, 209, 0.4);
+  --hazard-shadow: 0 0 25px rgba(0, 255, 209, 0.2);
+}
+
+[data-hazard="wildfire"] {
+  --hazard-accent: var(--wildfire-lava);
+  --hazard-secondary: var(--wildfire-amber);
+  --hazard-glow: rgba(255, 77, 0, 0.4);
+  --hazard-shadow: 0 0 25px rgba(255, 77, 0, 0.2);
+}
+
+[data-hazard="storm"] {
+  --hazard-accent: var(--storm-torrent);
+  --hazard-secondary: var(--storm-foam);
+  --hazard-glow: rgba(0, 209, 255, 0.4);
+  --hazard-shadow: 0 0 25px rgba(0, 209, 255, 0.2);
+}
+
 @layer base {
   body {
     background-color: #0B0E14;
-    /* Hardcoded for guaranteed billion-dollar dark mode */
     color: #FFFFFF;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-image:
-      radial-gradient(circle at 0% 0%, rgba(0, 255, 209, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 100% 100%, rgba(212, 175, 55, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 0% 0%, var(--hazard-glow) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.01) 0%, transparent 50%),
       linear-gradient(to bottom right, #0B0E14, #05070A);
     background-attachment: fixed;
     min-height: 100vh;
+    transition: background-image 1s ease;
   }
 
   h1,
@@ -69,7 +104,8 @@
   }
 
   .elegant-card:hover {
-    border-color: rgba(0, 255, 209, 0.3);
+    border-color: var(--hazard-accent);
+    box-shadow: var(--hazard-shadow);
   }
 
   .btn-gold {
@@ -96,18 +132,18 @@
     border-radius: 9999px;
     font-weight: 700;
     transition: all 0.5s;
-    background-color: rgba(0, 255, 209, 0.1);
-    border: 1px solid rgba(0, 255, 209, 0.3);
-    color: #00FFD1;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--hazard-accent);
+    color: var(--hazard-accent);
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 0.6rem;
   }
 
   .btn-cyan:hover {
-    background-color: rgba(0, 255, 209, 0.2);
-    border-color: #00FFD1;
-    box-shadow: 0 0 25px rgba(0, 255, 209, 0.2);
+    background-color: var(--hazard-accent);
+    color: #000;
+    box-shadow: var(--hazard-shadow);
   }
 
   .btn-minimal {
@@ -151,12 +187,28 @@
 }
 
 /* Billion Dollar Glows */
+.text-cyan {
+  color: var(--hazard-accent);
+}
+
 .glow-cyan {
-  text-shadow: 0 0 15px rgba(0, 255, 209, 0.4);
+  text-shadow: var(--hazard-shadow);
+}
+
+.shadow-cyan {
+  box-shadow: var(--hazard-shadow);
+}
+
+.border-cyan {
+  border-color: var(--hazard-accent);
+}
+
+.bg-cyan {
+  background-color: var(--hazard-accent);
 }
 
 .glow-gold {
-  text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+  text-shadow: 0 0 15px var(--hazard-secondary);
 }
 
 .globe-container {

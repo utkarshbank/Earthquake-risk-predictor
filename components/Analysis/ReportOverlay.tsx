@@ -1,13 +1,11 @@
 'use client';
 
 import React from 'react';
-import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar, Cell,
-    PieChart, Pie, Legend
-} from 'recharts';
-import { ReportData } from '@/services/imageAnalysis';
-import SeismicChatbot from './SeismicChatbot';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
+import { motion } from 'framer-motion';
+import { Zap, ShieldAlert, Activity, TrendingUp, Flame, CloudLightning } from 'lucide-react';
+import { ReportData, HazardType } from '@/services/imageAnalysis';
+import { useHazard } from '@/context/HazardContext';
 
 interface ReportOverlayProps {
     isOpen: boolean;
@@ -17,224 +15,211 @@ interface ReportOverlayProps {
     region?: string;
 }
 
-const COLORS = ['#818cf8', '#c084fc', '#fb7185', '#34d399', '#fbbf24'];
+const BRAND_COLORS = ['var(--hazard-accent)', 'var(--hazard-secondary)', '#1A2230', '#0B0E14', '#FFFFFF'];
 
 export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, region }: ReportOverlayProps) {
+    const { hazard, theme } = useHazard();
     if (!isOpen) return null;
 
+    const HazardIcon = hazard === 'seismic' ? Activity : hazard === 'wildfire' ? Flame : CloudLightning;
+
     return (
-        <div style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(2, 6, 23, 0.95)',
-            zIndex: 100,
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '2rem',
-            overflowY: 'auto',
-            backdropFilter: 'blur(12px)'
-        }}>
-            <div style={{
-                maxWidth: '1100px',
-                width: '100%',
-                margin: '0 auto',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2.5rem'
-            }}>
+        <div className="fixed inset-0 z-[100] flex flex-col p-8 overflow-y-auto bg-midnight/95 backdrop-blur-2xl">
+            <div className="max-w-6xl w-full mx-auto flex flex-col gap-10">
                 {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="flex justify-between items-center">
                     <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                            <h2 style={{ fontSize: '2.5rem', fontWeight: '800', background: 'linear-gradient(to right, #818cf8, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
-                                Advanced Seismic Intelligence Report
+                        <div className="flex items-center gap-4 mb-2">
+                            <h2 className="text-4xl serif font-light tracking-widest uppercase text-white">
+                                {hazard === 'seismic' ? 'Seismic' : hazard === 'wildfire' ? 'Wildfire' : 'Storm'} <span className="text-cyan glow-cyan italic">Intelligence</span>
                             </h2>
                             {isAiVerified && (
-                                <span style={{
-                                    backgroundColor: 'rgba(52, 211, 153, 0.1)',
-                                    color: '#34d399',
-                                    padding: '0.25rem 0.75rem',
-                                    borderRadius: '9999px',
-                                    fontSize: '0.8rem',
-                                    fontWeight: '700',
-                                    border: '1px solid rgba(52, 211, 153, 0.2)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.4rem'
-                                }}>
-                                    <span>✨</span> AI VERIFIED
+                                <span className="px-3 py-1 bg-cyan/10 border border-cyan/20 text-[0.6rem] text-cyan uppercase tracking-[0.3em] font-bold glow-cyan flex items-center gap-2 rounded-full">
+                                    <Zap className="w-3 h-3" /> AI CALIBRATED
                                 </span>
                             )}
                         </div>
-                        <p style={{ color: '#94a3b8', fontSize: '1.1rem', marginTop: '0.5rem' }}>
-                            {region ? `Regional Analysis: ${region}` : 'Comprehensive analysis of regional tectonic strain and structural vulnerability.'}
+                        <p className="text-[0.65rem] uppercase tracking-[0.4em] font-bold text-white/30 font-mono">
+                            {region ? `Regional Analysis Matrix: ${region}` : 'Satellite Spectral Analytics & Structural Vulnerability'}
                         </p>
                     </div>
-                    <div style={{ textAlign: 'right', marginRight: '1rem' }}>
-                        <div style={{ color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
-                            Accuracy Baseline
+                    <div className="flex items-center gap-8">
+                        <div className="text-right">
+                            <div className="text-[0.5rem] text-white/20 uppercase tracking-[0.3em] font-bold font-mono mb-1">
+                                Accuracy Baseline
+                            </div>
+                            <div className="flex items-center gap-2 text-cyan font-bold tracking-widest text-[0.6rem] uppercase">
+                                <div className="w-1.5 h-1.5 rounded-full bg-cyan shadow-cyan animate-pulse"></div>
+                                {isAiVerified ? 'NEURAL SYNCED' : 'LOCAL VISION'}
+                            </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#34d399', fontWeight: '700' }}>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#34d399', boxShadow: '0 0 8px #34d399' }}></div>
-                            {isAiVerified ? 'GEMINI CALIBRATED' : 'LOCAL VISION'}
-                        </div>
+                        <button onClick={onClose} className="btn-minimal">
+                            De-authenticate
+                        </button>
                     </div>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            padding: '0.75rem 1.5rem',
-                            borderRadius: '0.75rem',
-                            backgroundColor: '#1e293b',
-                            border: '1px solid #334155',
-                            color: 'white',
-                            cursor: 'pointer',
-                            fontSize: '1rem',
-                            fontWeight: '600',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#334155'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
-                    >
-                        Close Report
-                    </button>
                 </div>
 
                 {/* AI Justification Section */}
                 {data.justification && (
-                    <div style={{
-                        backgroundColor: 'rgba(129, 140, 248, 0.05)',
-                        border: '1px solid rgba(129, 140, 248, 0.2)',
-                        padding: '1.5rem',
-                        borderRadius: '1rem',
-                        marginTop: '-1rem'
-                    }}>
-                        <div style={{ color: '#818cf8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-                            Scientific Basis (AI Assessment)
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="elegant-panel !rounded-3xl p-6 bg-cyan/5 border-cyan/10"
+                    >
+                        <div className="text-[0.55rem] text-cyan/40 font-bold uppercase tracking-[0.4em] mb-3 flex items-center gap-3">
+                            <ShieldAlert className="w-3 h-3" /> Core AI Assessment
                         </div>
-                        <p style={{ color: '#e2e8f0', fontSize: '1rem', lineHeight: '1.6', margin: 0, fontStyle: 'italic' }}>
+                        <p className="text-sm text-white/80 leading-relaxed font-light italic">
                             "{data.justification}"
                         </p>
-                    </div>
+                    </motion.div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Graph 1: Temporal Trend */}
-                    <div style={{ backgroundColor: '#0f172a', padding: '2rem', borderRadius: '1.5rem', border: '1px solid #1e293b' }}>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.25rem', color: '#e2e8f0' }}>Vision-Adaptive Strain Forecast</h3>
-                        <p style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '1.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Derived from Pixel Density & Topography</p>
-                        <div style={{ height: '300px', width: '100%' }}>
+                    <div className="elegant-card p-8 rounded-[2.5rem] bg-navy-900/40 border-white/5">
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 className="text-lg text-white tracking-widest uppercase font-light">{data.unit1 || 'Strain'} Forecast</h3>
+                                <p className="text-[0.5rem] text-white/20 uppercase tracking-[0.2em] font-mono">{hazard === 'seismic' ? 'Tectonic Spectral Flux' : hazard === 'wildfire' ? 'Biomass Ignition Potential' : 'Atmospheric Load Telemetry'}</p>
+                            </div>
+                            <HazardIcon className="w-4 h-4 text-cyan/30" />
+                        </div>
+                        <div className="h-[280px] w-full">
                             <ResponsiveContainer>
                                 <AreaChart data={data.temporalTrend}>
                                     <defs>
                                         <linearGradient id="colorStrain" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#818cf8" stopOpacity={0} />
+                                            <stop offset="5%" stopColor="#00FFD1" stopOpacity={0.2} />
+                                            <stop offset="95%" stopColor="#00FFD1" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                    <XAxis dataKey="time" stroke="#64748b" axisLine={false} tickLine={false} />
-                                    <YAxis stroke="#64748b" axisLine={false} tickLine={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                                    <XAxis dataKey="time" stroke="rgba(255,255,255,0.1)" axisLine={false} tickLine={false} style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em' }} />
+                                    <YAxis stroke="rgba(255,255,255,0.1)" axisLine={false} tickLine={false} style={{ fontSize: '0.6rem', fontWeight: 600 }} />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '0.5rem' }}
-                                        itemStyle={{ color: '#818cf8' }}
+                                        contentStyle={{ backgroundColor: '#0B0E14', border: '1px solid var(--hazard-accent)', borderRadius: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+                                        itemStyle={{ color: 'var(--hazard-accent)', fontSize: '0.7rem', fontWeight: 700 }}
+                                        labelStyle={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.6rem', marginBottom: '4px', textTransform: 'uppercase' }}
                                     />
-                                    <Area type="monotone" dataKey="strain" stroke="#818cf8" fillOpacity={1} fill="url(#colorStrain)" strokeWidth={3} />
+                                    <Area type="monotone" dataKey="value1" stroke="var(--hazard-accent)" fillOpacity={1} fill="url(#colorStrain)" strokeWidth={2} />
+                                    <Area type="monotone" dataKey="value2" stroke="var(--hazard-secondary)" fillOpacity={0.1} fill="transparent" strokeWidth={1} strokeDasharray="5 5" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
-                        <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '1rem', lineHeight: '1.5' }}>
-                            Forecasted strain accumulation relative to identified visual hotspots on the map. High-contrast areas correlate with increased tectonic flux indicators.
-                        </p>
                     </div>
 
                     {/* Graph 2: Magnitude Distribution */}
-                    <div style={{ backgroundColor: '#0f172a', padding: '2rem', borderRadius: '1.5rem', border: '1px solid #1e293b' }}>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.25rem', color: '#e2e8f0' }}>Chromatographic Risk Frequency</h3>
-                        <p style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '1.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Adaptive Gutenberg-Richter Distribution</p>
-                        <div style={{ height: '300px', width: '100%' }}>
+                    <div className="elegant-card p-8 rounded-[2.5rem] bg-navy-900/40 border-white/5">
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 className="text-lg text-white tracking-widest uppercase font-light">{hazard === 'seismic' ? 'Risk Frequency' : 'Intensity Map'}</h3>
+                                <p className="text-[0.5rem] text-white/20 uppercase tracking-[0.2em] font-mono">{hazard === 'seismic' ? 'Gutenberg-Richter Recurrence' : hazard === 'wildfire' ? 'Drought-Ignition Correlation' : 'Nexrad Precipitation Indices'}</p>
+                            </div>
+                            <TrendingUp className="w-4 h-4 text-gold/30" />
+                        </div>
+                        <div className="h-[280px] w-full">
                             <ResponsiveContainer>
                                 <BarChart data={data.magnitudeDist}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                    <XAxis dataKey="magnitude" stroke="#64748b" label={{ value: 'Magnitude', position: 'insideBottom', offset: -5, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                                    <YAxis stroke="#64748b" label={{ value: 'Incident Index', angle: -90, position: 'insideLeft', fill: '#64748b' }} axisLine={false} tickLine={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                                    <XAxis dataKey="label" stroke="rgba(255,255,255,0.1)" axisLine={false} tickLine={false} style={{ fontSize: '0.6rem', fontWeight: 600 }} />
+                                    <YAxis stroke="rgba(255,255,255,0.1)" axisLine={false} tickLine={false} style={{ fontSize: '0.6rem', fontWeight: 600 }} />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '0.5rem' }}
-                                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                                        formatter={(value: any) => [value !== undefined ? Number(value).toFixed(2) : "0.00", "Incident Index"]}
+                                        contentStyle={{ backgroundColor: '#0B0E14', border: '1px solid rgba(212, 175, 55, 0.1)', borderRadius: '1rem' }}
+                                        cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+                                        formatter={(value: any) => [Number(value).toFixed(2), "Force Index"]}
                                     />
-                                    <Bar dataKey="probability" radius={[4, 4, 0, 0]} label={{ position: 'top', fill: '#64748b', fontSize: 10, formatter: (val: any) => val !== undefined ? Number(val).toFixed(2) : "0.00" }}>
+                                    <Bar dataKey="probability" radius={[6, 6, 0, 0]}>
                                         {data.magnitudeDist.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.magnitude > 6 ? '#fb7185' : '#818cf8'} />
+                                            <Cell key={`cell-${index}`} fill={index > 4 ? 'var(--hazard-secondary)' : 'var(--hazard-accent)'} opacity={index > 4 ? 0.8 : 0.4} />
                                         ))}
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
-                        <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '1rem', lineHeight: '1.5' }}>
-                            Magnitude probability curve dynamically weighted by primary hazard colors (Red/Orange) detected in the map vision analysis.
-                        </p>
                     </div>
 
                     {/* Graph 3: Factor Comparison */}
-                    <div style={{ backgroundColor: '#0f172a', padding: '2rem', borderRadius: '1.5rem', border: '1px solid #1e293b', gridColumn: 'span 2' }}>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: '#e2e8f0' }}>Multi-Factor Vulnerability Index</h3>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4rem' }}>
-                            <div style={{ height: '300px', width: '400px' }}>
+                    <div className="elegant-card p-10 rounded-[3rem] bg-navy-900/40 border-white/5 lg:col-span-2">
+                        <div className="flex items-center gap-4 mb-10">
+                            <div className="w-1.5 h-6 bg-cyan/40 rounded-full" />
+                            <h3 className="text-xl text-white tracking-widest uppercase font-light">Vulnerability Matrix</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+                            <div className="h-[320px] relative">
                                 <ResponsiveContainer>
                                     <PieChart>
                                         <Pie
                                             data={data.factorComparison}
                                             cx="50%"
                                             cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={100}
-                                            paddingAngle={5}
+                                            innerRadius={80}
+                                            outerRadius={120}
+                                            paddingAngle={8}
                                             dataKey="value"
+                                            stroke="none"
                                         >
                                             {data.factorComparison.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                <Cell key={`cell-${index}`} fill={BRAND_COLORS[index % BRAND_COLORS.length]} />
                                             ))}
                                         </Pie>
                                         <Tooltip
-                                            contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '0.5rem' }}
+                                            contentStyle={{ backgroundColor: '#0B0E14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem', color: 'white' }}
                                         />
-                                        <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" />
                                     </PieChart>
                                 </ResponsiveContainer>
-                            </div>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                    {data.factorComparison.map((factor, idx) => (
-                                        <div key={factor.name}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                                <span style={{ fontWeight: '500', color: '#cbd5e1' }}>{factor.name} Factors</span>
-                                                <span style={{ color: COLORS[idx % COLORS.length], fontWeight: '700' }}>{factor.value}% Intensity</span>
-                                            </div>
-                                            <div style={{ width: '100%', height: '8px', backgroundColor: '#1e293b', borderRadius: '4px', overflow: 'hidden' }}>
-                                                <div style={{ width: `${factor.value}%`, height: '100%', backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span className="text-[0.6rem] text-white/20 uppercase tracking-[0.4em] font-bold">Aggregate</span>
+                                    <span className="text-3xl serif text-cyan glow-cyan italic">{hazard === 'seismic' ? 'Force' : hazard === 'wildfire' ? 'Brix' : 'Flow'}</span>
                                 </div>
+                            </div>
+                            <div className="space-y-10">
+                                {data.factorComparison.map((factor, idx) => (
+                                    <div key={factor.name} className="group">
+                                        <div className="flex justify-between items-end mb-3">
+                                            <div className="space-y-1">
+                                                <span className="text-[0.55rem] text-white/30 uppercase tracking-[0.3em] font-bold mb-1 block">Vector</span>
+                                                <span className="text-sm font-medium text-white/80 group-hover:text-white transition-colors uppercase tracking-widest">{factor.name} Analysis</span>
+                                            </div>
+                                            <span className="text-lg serif text-cyan glow-cyan italic">{factor.value}%</span>
+                                        </div>
+                                        <div className="w-full h-1.5 bg-white/[0.03] rounded-full overflow-hidden border border-white/5">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${factor.value}%` }}
+                                                transition={{ duration: 1.5, ease: "circOut" }}
+                                                style={{ backgroundColor: BRAND_COLORS[idx % BRAND_COLORS.length] }}
+                                                className="h-full shadow-[0_0_10px_rgba(0,255,209,0.2)]"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer Analysis */}
-                <div style={{
-                    padding: '2rem',
-                    borderRadius: '1.5rem',
-                    background: 'linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(192, 132, 252, 0.1))',
-                    border: '1px solid rgba(129, 140, 248, 0.2)',
-                    marginBottom: '4rem'
-                }}>
-                    <h4 style={{ color: '#818cf8', fontSize: '1.1rem', marginBottom: '1rem' }}>Executive Summary</h4>
-                    <p style={{ color: '#e2e8f0', lineHeight: '1.8', fontSize: '1.05rem' }}>
-                        The model indicates a synergistic risk profile where geological volatility and structural vulnerability intersect. Continuous monitoring of seismic wave propagation is recommended.
+                <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    className="elegant-panel p-10 bg-navy-900/40 border-white/5 mb-16 relative overflow-hidden group"
+                >
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-cyan/5 blur-[100px] rounded-full -z-10 group-hover:bg-cyan/10 transition-all duration-1000" />
+                    <div className="flex items-center gap-6 mb-6">
+                        <Activity className="w-5 h-5 text-cyan glow-cyan" />
+                        <h4 className="text-[0.6rem] text-cyan uppercase tracking-[0.5em] font-bold glow-cyan">Intelligence Stream Executive Summary</h4>
+                    </div>
+                    <p className="text-lg text-white/70 leading-relaxed font-light serif italic max-w-4xl">
+                        {hazard === 'seismic'
+                            ? "The neural extraction confirms a synergistic risk profile where geological volatility and structural vulnerability intersect. Continuous monitoring of seismic wave propagation via Aether Link is recommended."
+                            : hazard === 'wildfire'
+                                ? "Ember analysis indicates critical biomass fuel density with high ignition potential. Immediate defensible space enforcement and canopy moisture monitoring are advised for identified nodes."
+                                : "Atmospheric telemetry reveals hydrologic saturation levels exceeding safety thresholds. Structural wind load and flood egress protocols should be prioritized for the analyzed urban grid."
+                        }
                     </p>
-                </div>
+                </motion.div>
             </div>
         </div>
     );
 }
+

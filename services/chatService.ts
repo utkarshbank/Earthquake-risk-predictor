@@ -6,38 +6,46 @@ export interface ChatMessage {
     content: string;
 }
 
-export const getSeismicChatResponse = async (
+import { HazardType } from "./imageAnalysis";
+
+export const getHazardChatResponse = async (
     userMessage: string,
     history: ChatMessage[],
     reportContext: ReportData,
+    hazard: HazardType,
     region?: string
 ): Promise<string> => {
     try {
         const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
         if (!apiKey) {
-            return "⚠️ **Gemini API Key is missing.** Please ensure you have added `NEXT_PUBLIC_GEMINI_API_KEY` to your `.env.local` file and restarted your development server.";
+            return "⚠️ **Gemini API Key is missing.**";
         }
+
+        const personae = {
+            seismic: 'the "Seismic Companion", an AI expert in seismology and structural engineering',
+            wildfire: 'the "Ember Intelligence", an AI expert in wildfire behavior and forestry resilience',
+            storm: 'the "Torrent Analyst", an AI expert in meteorology and hydrologic infrastructure'
+        };
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash",
+            model: "gemini-3-flash-preview",
             systemInstruction: `
-                You are the "Seismic Companion", an AI expert in seismology and structural engineering.
-                Your goal is to answer questions about a specific earthquake risk report provided in the context.
+                You are ${personae[hazard]}.
+                Your goal is to answer questions about a specific ${hazard} risk report provided in the context.
                 
                 CONTEXT DATA:
                 Region: ${region || "Unknown"}
+                Hazard Type: ${hazard}
                 Justification: ${reportContext.justification || "None provided"}
                 Temporal Trend: ${JSON.stringify(reportContext.temporalTrend)}
-                Magnitude Frequency: ${JSON.stringify(reportContext.magnitudeDist)}
+                Risk Distribution: ${JSON.stringify(reportContext.magnitudeDist)}
                 Factors: ${JSON.stringify(reportContext.factorComparison)}
                 
                 RULES:
                 1. Always refer to the data in the context when answering.
-                2. If the user asks about trends, refer to the temporalTrend data.
-                3. If the user asks about magnitudes, refer to the magnitudeDist data (probabilities are incident indices).
-                4. Keep answers professional, concise, and focused on safety and science.
-                5. Use markdown for better readability.
+                2. Professional, concise, and focused on safety/science.
+                3. Use markdown for better readability.
             `
         });
 
@@ -51,10 +59,23 @@ export const getSeismicChatResponse = async (
         });
 
         const result = await chat.sendMessage(userMessage);
-        const response = await result.response;
+        const response = result.response;
         return response.text();
     } catch (error: any) {
-        console.error("Seismic Chat error:", error);
-        return `❌ **Seismic Chat Error:** ${error.message || "Unknown error"}\n\nPlease check your API key and project status in the Google Cloud Console.`;
+        console.error("Hazard Chat error:", error);
+
+        const errorString = String(error);
+        const isQuota = errorString.includes('429') || errorString.toLowerCase().includes('quota');
+
+        if (isQuota) {
+            // "Low Power Mode" fallback
+            const summary = reportContext.justification
+                ? `Based on active telemetry: ${reportContext.justification}`
+                : `I'm operating on low-power local vision telemetry. I can see current ${hazard} risk factors: ${JSON.stringify(reportContext.factorComparison)}.`;
+
+            return `⚠️ **SATELLITE LINK SATURATED (QUOTA EXCEEDED)**\n\nAI verification node is temporarily offline. Switching to **Local Intelligence Mode**.\n\n${summary}\n\n*Please retry your specific query in ~20 seconds for full neural analysis.*`;
+        }
+
+        return `❌ **TRANSMISSION ERROR:** Secondary node failure (${error.message || "Uplink server error"}). Please refresh uplink.`;
     }
 };

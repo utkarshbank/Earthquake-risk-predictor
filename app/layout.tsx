@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Advanced global earthquake monitoring and risk prediction",
 };
 
+import { HazardProvider } from "@/context/HazardContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,7 +29,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${playfair.variable} antialiased`}
       >
-        {children}
+        <HazardProvider>
+          {children}
+        </HazardProvider>
       </body>
     </html>
   );

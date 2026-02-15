@@ -20,7 +20,7 @@ export const getSeismicChatResponse = async (
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.0-flash",
             systemInstruction: `
                 You are the "Seismic Companion", an AI expert in seismology and structural engineering.
                 Your goal is to answer questions about a specific earthquake risk report provided in the context.
@@ -39,7 +39,7 @@ export const getSeismicChatResponse = async (
                 4. Keep answers professional, concise, and focused on safety and science.
                 5. Use markdown for better readability.
             `
-        }, { apiVersion: 'v1beta' });
+        });
 
         const chat = model.startChat({
             history: history

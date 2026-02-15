@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 import { HazardProvider } from "@/context/HazardContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 
 export default function RootLayout({
   children,
@@ -30,7 +31,9 @@ export default function RootLayout({
         className={`${inter.variable} ${playfair.variable} antialiased`}
       >
         <HazardProvider>
-          {children}
+          <CurrencyProvider>
+            {children}
+          </CurrencyProvider>
         </HazardProvider>
       </body>
     </html>

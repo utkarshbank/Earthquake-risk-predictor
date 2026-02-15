@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useHazard, HazardType } from '@/context/HazardContext';
+import { useCurrency } from '@/context/CurrencyContext';
 import { Flame, CloudLightning, Shield } from 'lucide-react';
 
 interface SidebarProps {
@@ -32,6 +33,7 @@ export default function Sidebar({
     onMagChange,
 }: SidebarProps) {
     const { hazard, setHazard, theme } = useHazard();
+    const { solanaBalance } = useCurrency();
 
     const hazards: { id: HazardType; label: string; icon: any; color: string }[] = [
         { id: 'seismic', label: 'Seismic', icon: Activity, color: 'var(--seismic-cyan)' },
@@ -51,6 +53,17 @@ export default function Sidebar({
                     <div className="px-2.5 py-1 rounded bg-cyan/10 border-cyan/20 text-[0.55rem] text-cyan uppercase tracking-[0.3em] font-bold glow-cyan">Live Link</div>
                 </div>
                 <p className="text-[0.6rem] text-white/30 uppercase tracking-[0.4em] font-medium font-mono">{theme.label} Protocol</p>
+                
+                {/* SOLANA Balance */}
+                <div className="mt-4 pt-4 border-t border-white/5">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[0.5rem] uppercase tracking-[0.3em] text-white/20 font-bold font-mono">SOLANA Balance</span>
+                        <div className="px-3 py-1 bg-gold/10 border border-gold/20 rounded-full">
+                            <span className="text-lg serif text-gold glow-gold">{solanaBalance.toFixed(3)}</span>
+                        </div>
+                    </div>
+                    <p className="text-[0.45rem] text-gold/40 uppercase tracking-[0.2em] font-mono mt-2 italic">0.015 SOL per full report</p>
+                </div>
             </div>
 
             {/* Hazard Selector */}

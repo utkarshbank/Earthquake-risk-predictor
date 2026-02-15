@@ -27,9 +27,11 @@ import { analyzeMapImage, AnalysisResult } from '@/services/imageAnalysis';
 import ReportOverlay from '@/components/Analysis/ReportOverlay';
 import RiskChatbot from '@/components/Analysis/SeismicChatbot';
 import { useHazard } from '@/context/HazardContext';
+import { useCurrency, REPORT_COST } from '@/context/CurrencyContext';
 
 export default function AnalysisPage() {
     const { hazard, theme } = useHazard();
+    const { solanaBalance, deductSolana, canAfford } = useCurrency();
     const [image, setImage] = useState<string | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -38,6 +40,7 @@ export default function AnalysisPage() {
     const [hoveredChunk, setHoveredChunk] = useState<string | null>(null);
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [analysisError, setAnalysisError] = useState<'QUOTA_EXCEEDED' | 'API_ERROR' | null>(null);
+    const [insufficientFunds, setInsufficientFunds] = useState(false);
 
     const handleImageSelected = (imgUrl: string) => {
         setImage(imgUrl);
@@ -67,6 +70,20 @@ export default function AnalysisPage() {
         setResult(null);
         setHoveredChunk(null);
         setLocation('');
+        setInsufficientFunds(false);
+    };
+
+    const handleReportOpen = () => {
+        if (canAfford(REPORT_COST)) {
+            const success = deductSolana(REPORT_COST);
+            if (success) {
+                setIsReportOpen(true);
+                setInsufficientFunds(false);
+            }
+        } else {
+            setInsufficientFunds(true);
+            setTimeout(() => setInsufficientFunds(false), 3000);
+        }
     };
 
     const hoveredData = result?.chunks.find(c => c.id === hoveredChunk);
@@ -228,6 +245,25 @@ export default function AnalysisPage() {
                                 </div>
                             </div>
 
+                            {/* SOLANA Balance */}
+                            <div className="flex items-center justify-between pb-6 border-b border-white/5">
+                                <div>
+                                    <h3 className="text-[0.6rem] font-bold uppercase tracking-[0.3em] text-white/20 mb-2">SOLANA Balance</h3>
+                                    <div className="flex items-center gap-3">
+                                        <div className="px-3 py-1 bg-gold/10 border border-gold/20 rounded-full">
+                                            <span className="text-lg serif text-gold glow-gold">{solanaBalance.toFixed(3)}</span>
+                                        </div>
+                                        <span className="text-[0.5rem] text-gold/40 uppercase tracking-[0.2em] font-mono">SOL</span>
+                                    </div>
+                                    <p className="text-[0.45rem] text-gold/40 uppercase tracking-[0.2em] font-mono mt-2 italic">0.015 SOL per full report</p>
+                                </div>
+                                {insufficientFunds && (
+                                    <div className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-[0.5rem] text-red-400 uppercase tracking-[0.3em] font-bold animate-pulse">
+                                        Insufficient Funds
+                                    </div>
+                                )}
+                            </div>
+
                             {!image ? (
                                 <div className="py-12 space-y-8">
                                     <p className="text-[0.75rem] text-white/30 leading-relaxed italic border-l-2 border-cyan/20 pl-8 font-serif">
@@ -383,11 +419,17 @@ export default function AnalysisPage() {
                                                 </div>
 
                                                 <button
-                                                    onClick={() => setIsReportOpen(true)}
-                                                    className="w-full btn-cyan py-5 text-[0.7rem] tracking-[0.4em] uppercase font-bold flex items-center justify-center gap-4 shadow-cyan"
+                                                    onClick={handleReportOpen}
+                                                    disabled={!canAfford(REPORT_COST)}
+                                                    className={`w-full py-5 text-[0.7rem] tracking-[0.4em] uppercase font-bold flex items-center justify-center gap-4 transition-all ${
+                                                        canAfford(REPORT_COST) 
+                                                            ? 'btn-cyan shadow-cyan' 
+                                                            : 'bg-white/5 border border-white/10 text-white/20 cursor-not-allowed'
+                                                    }`}
                                                 >
                                                     <Activity className="w-5 h-5" />
-                                                    View Full Analysis Report
+                                                    {canAfford(REPORT_COST) ? 'View Full Analysis Report' : 'Insufficient SOL'}
+                                                    {!canAfford(REPORT_COST) && <span className="text-[0.55rem]">(Need {REPORT_COST} SOL)</span>}
                                                 </button>
 
                                                 <button

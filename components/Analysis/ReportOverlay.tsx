@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Zap, ShieldAlert, Activity, TrendingUp, Flame, CloudLightning } from 'lucide-react';
 import { ReportData, HazardType } from '@/services/imageAnalysis';
 import { useHazard } from '@/context/HazardContext';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface ReportOverlayProps {
     isOpen: boolean;
@@ -19,6 +20,7 @@ const BRAND_COLORS = ['var(--hazard-accent)', 'var(--hazard-secondary)', '#1A223
 
 export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, region }: ReportOverlayProps) {
     const { hazard, theme } = useHazard();
+    const { solanaBalance } = useCurrency();
     if (!isOpen) return null;
 
     const HazardIcon = hazard === 'seismic' ? Activity : hazard === 'wildfire' ? Flame : CloudLightning;
@@ -39,9 +41,16 @@ export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, reg
                                 </span>
                             )}
                         </div>
-                        <p className="text-[0.65rem] uppercase tracking-[0.4em] font-bold text-white/30 font-mono">
-                            {region ? `Regional Analysis Matrix: ${region}` : 'Satellite Spectral Analytics & Structural Vulnerability'}
-                        </p>
+                        <div className="flex items-center gap-6">
+                            <p className="text-[0.65rem] uppercase tracking-[0.4em] font-bold text-white/30 font-mono">
+                                {region ? `Regional Analysis Matrix: ${region}` : 'Satellite Spectral Analytics & Structural Vulnerability'}
+                            </p>
+                            {/* SOLANA Balance */}
+                            <div className="flex items-center gap-3 px-3 py-1 bg-gold/10 border border-gold/20 rounded-full">
+                                <span className="text-[0.5rem] text-gold/60 uppercase tracking-[0.2em] font-mono">SOLANA</span>
+                                <span className="text-sm serif text-gold glow-gold">{solanaBalance.toFixed(3)}</span>
+                            </div>
+                        </div>
                     </div>
                     <div className="flex items-center gap-8">
                         <div className="text-right">
@@ -54,7 +63,7 @@ export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, reg
                             </div>
                         </div>
                         <button onClick={onClose} className="btn-minimal">
-                            De-authenticate
+                            Back to Analysis
                         </button>
                     </div>
                 </div>

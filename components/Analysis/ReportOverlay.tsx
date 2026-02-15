@@ -3,8 +3,9 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
 import { motion } from 'framer-motion';
-import { Zap, ShieldAlert, Activity, TrendingUp } from 'lucide-react';
-import { ReportData } from '@/services/imageAnalysis';
+import { Zap, ShieldAlert, Activity, TrendingUp, Flame, CloudLightning } from 'lucide-react';
+import { ReportData, HazardType } from '@/services/imageAnalysis';
+import { useHazard } from '@/context/HazardContext';
 
 interface ReportOverlayProps {
     isOpen: boolean;
@@ -14,10 +15,13 @@ interface ReportOverlayProps {
     region?: string;
 }
 
-const BRAND_COLORS = ['#00FFD1', '#D4AF37', '#1A2230', '#0B0E14', '#FFFFFF'];
+const BRAND_COLORS = ['var(--hazard-accent)', 'var(--hazard-secondary)', '#1A2230', '#0B0E14', '#FFFFFF'];
 
 export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, region }: ReportOverlayProps) {
+    const { hazard, theme } = useHazard();
     if (!isOpen) return null;
+
+    const HazardIcon = hazard === 'seismic' ? Activity : hazard === 'wildfire' ? Flame : CloudLightning;
 
     return (
         <div className="fixed inset-0 z-[100] flex flex-col p-8 overflow-y-auto bg-midnight/95 backdrop-blur-2xl">
@@ -27,7 +31,7 @@ export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, reg
                     <div>
                         <div className="flex items-center gap-4 mb-2">
                             <h2 className="text-4xl serif font-light tracking-widest uppercase text-white">
-                                Seismic <span className="text-cyan glow-cyan italic">Intelligence</span>
+                                {hazard === 'seismic' ? 'Seismic' : hazard === 'wildfire' ? 'Wildfire' : 'Storm'} <span className="text-cyan glow-cyan italic">Intelligence</span>
                             </h2>
                             {isAiVerified && (
                                 <span className="px-3 py-1 bg-cyan/10 border border-cyan/20 text-[0.6rem] text-cyan uppercase tracking-[0.3em] font-bold glow-cyan flex items-center gap-2 rounded-full">
@@ -76,10 +80,10 @@ export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, reg
                     <div className="elegant-card p-8 rounded-[2.5rem] bg-navy-900/40 border-white/5">
                         <div className="flex items-center justify-between mb-8">
                             <div>
-                                <h3 className="text-lg text-white tracking-widest uppercase font-light">Strain Forecast</h3>
-                                <p className="text-[0.5rem] text-white/20 uppercase tracking-[0.2em] font-mono">Tectonic Spectral Flux</p>
+                                <h3 className="text-lg text-white tracking-widest uppercase font-light">{data.unit1 || 'Strain'} Forecast</h3>
+                                <p className="text-[0.5rem] text-white/20 uppercase tracking-[0.2em] font-mono">{hazard === 'seismic' ? 'Tectonic Spectral Flux' : hazard === 'wildfire' ? 'Biomass Ignition Potential' : 'Atmospheric Load Telemetry'}</p>
                             </div>
-                            <Activity className="w-4 h-4 text-cyan/30" />
+                            <HazardIcon className="w-4 h-4 text-cyan/30" />
                         </div>
                         <div className="h-[280px] w-full">
                             <ResponsiveContainer>
@@ -94,11 +98,12 @@ export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, reg
                                     <XAxis dataKey="time" stroke="rgba(255,255,255,0.1)" axisLine={false} tickLine={false} style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em' }} />
                                     <YAxis stroke="rgba(255,255,255,0.1)" axisLine={false} tickLine={false} style={{ fontSize: '0.6rem', fontWeight: 600 }} />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#0B0E14', border: '1px solid rgba(0, 255, 209, 0.1)', borderRadius: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
-                                        itemStyle={{ color: '#00FFD1', fontSize: '0.7rem', fontWeight: 700 }}
+                                        contentStyle={{ backgroundColor: '#0B0E14', border: '1px solid var(--hazard-accent)', borderRadius: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+                                        itemStyle={{ color: 'var(--hazard-accent)', fontSize: '0.7rem', fontWeight: 700 }}
                                         labelStyle={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.6rem', marginBottom: '4px', textTransform: 'uppercase' }}
                                     />
-                                    <Area type="monotone" dataKey="strain" stroke="#00FFD1" fillOpacity={1} fill="url(#colorStrain)" strokeWidth={2} />
+                                    <Area type="monotone" dataKey="value1" stroke="var(--hazard-accent)" fillOpacity={1} fill="url(#colorStrain)" strokeWidth={2} />
+                                    <Area type="monotone" dataKey="value2" stroke="var(--hazard-secondary)" fillOpacity={0.1} fill="transparent" strokeWidth={1} strokeDasharray="5 5" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
@@ -108,8 +113,8 @@ export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, reg
                     <div className="elegant-card p-8 rounded-[2.5rem] bg-navy-900/40 border-white/5">
                         <div className="flex items-center justify-between mb-8">
                             <div>
-                                <h3 className="text-lg text-white tracking-widest uppercase font-light">Risk Frequency</h3>
-                                <p className="text-[0.5rem] text-white/20 uppercase tracking-[0.2em] font-mono">Gutenberg-Richter Recurrence</p>
+                                <h3 className="text-lg text-white tracking-widest uppercase font-light">{hazard === 'seismic' ? 'Risk Frequency' : 'Intensity Map'}</h3>
+                                <p className="text-[0.5rem] text-white/20 uppercase tracking-[0.2em] font-mono">{hazard === 'seismic' ? 'Gutenberg-Richter Recurrence' : hazard === 'wildfire' ? 'Drought-Ignition Correlation' : 'Nexrad Precipitation Indices'}</p>
                             </div>
                             <TrendingUp className="w-4 h-4 text-gold/30" />
                         </div>
@@ -117,7 +122,7 @@ export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, reg
                             <ResponsiveContainer>
                                 <BarChart data={data.magnitudeDist}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                                    <XAxis dataKey="magnitude" stroke="rgba(255,255,255,0.1)" axisLine={false} tickLine={false} style={{ fontSize: '0.6rem', fontWeight: 600 }} />
+                                    <XAxis dataKey="label" stroke="rgba(255,255,255,0.1)" axisLine={false} tickLine={false} style={{ fontSize: '0.6rem', fontWeight: 600 }} />
                                     <YAxis stroke="rgba(255,255,255,0.1)" axisLine={false} tickLine={false} style={{ fontSize: '0.6rem', fontWeight: 600 }} />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: '#0B0E14', border: '1px solid rgba(212, 175, 55, 0.1)', borderRadius: '1rem' }}
@@ -126,7 +131,7 @@ export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, reg
                                     />
                                     <Bar dataKey="probability" radius={[6, 6, 0, 0]}>
                                         {data.magnitudeDist.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.magnitude > 6 ? '#D4AF37' : 'rgba(212, 175, 55, 0.4)'} />
+                                            <Cell key={`cell-${index}`} fill={index > 4 ? 'var(--hazard-secondary)' : 'var(--hazard-accent)'} opacity={index > 4 ? 0.8 : 0.4} />
                                         ))}
                                     </Bar>
                                 </BarChart>
@@ -165,7 +170,7 @@ export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, reg
                                 </ResponsiveContainer>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                     <span className="text-[0.6rem] text-white/20 uppercase tracking-[0.4em] font-bold">Aggregate</span>
-                                    <span className="text-3xl serif text-cyan glow-cyan italic">Force</span>
+                                    <span className="text-3xl serif text-cyan glow-cyan italic">{hazard === 'seismic' ? 'Force' : hazard === 'wildfire' ? 'Brix' : 'Flow'}</span>
                                 </div>
                             </div>
                             <div className="space-y-10">
@@ -205,7 +210,12 @@ export default function ReportOverlay({ isOpen, onClose, data, isAiVerified, reg
                         <h4 className="text-[0.6rem] text-cyan uppercase tracking-[0.5em] font-bold glow-cyan">Intelligence Stream Executive Summary</h4>
                     </div>
                     <p className="text-lg text-white/70 leading-relaxed font-light serif italic max-w-4xl">
-                        "The neural extraction confirms a synergistic risk profile where geological volatility and structural vulnerability intersect. Continuous monitoring of seismic wave propagation via Aether Link is recommended for all high-value urban nodes identified in the spectral scan."
+                        {hazard === 'seismic'
+                            ? "The neural extraction confirms a synergistic risk profile where geological volatility and structural vulnerability intersect. Continuous monitoring of seismic wave propagation via Aether Link is recommended."
+                            : hazard === 'wildfire'
+                                ? "Ember analysis indicates critical biomass fuel density with high ignition potential. Immediate defensible space enforcement and canopy moisture monitoring are advised for identified nodes."
+                                : "Atmospheric telemetry reveals hydrologic saturation levels exceeding safety thresholds. Structural wind load and flood egress protocols should be prioritized for the analyzed urban grid."
+                        }
                     </p>
                 </motion.div>
             </div>

@@ -56,21 +56,22 @@ export default function GlobeViewer({ events, onSelectEvent }: GlobeViewerProps)
                 return;
             }
 
-            // Create starfield
+            // Create subtle starfield - visible but not distracting
             const starsGeometry = new THREE.BufferGeometry();
             const starsMaterial = new THREE.PointsMaterial({
                 color: 0xffffff,
-                size: 0.5,
+                size: 0.8,
                 transparent: true,
-                opacity: 0.8,
+                opacity: 0.6,
+                sizeAttenuation: false,
             });
 
             const starsVertices = [];
-            const numStars = 5000;
+            const numStars = 5000; // Good coverage
             for (let i = 0; i < numStars; i++) {
-                const x = (Math.random() - 0.5) * 2000;
-                const y = (Math.random() - 0.5) * 2000;
-                const z = (Math.random() - 0.5) * 2000;
+                const x = (Math.random() - 0.5) * 3000;
+                const y = (Math.random() - 0.5) * 3000;
+                const z = (Math.random() - 0.5) * 3000;
                 starsVertices.push(x, y, z);
             }
 
@@ -94,7 +95,7 @@ export default function GlobeViewer({ events, onSelectEvent }: GlobeViewerProps)
                 if (ambientLight) scene.remove(ambientLight);
             }
         };
-    }, [dimensions]);
+    }, [dimensions, hazard]);
 
     // Prepare data for the globe
     const globeData = events.map(event => {

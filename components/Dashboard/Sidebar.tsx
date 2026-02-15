@@ -40,6 +40,17 @@ export default function Sidebar({
         { id: 'wildfire', label: 'Wildfire', icon: Flame, color: 'var(--wildfire-lava)' },
         { id: 'storm', label: 'Storm', icon: CloudLightning, color: 'var(--storm-torrent)' }
     ];
+
+    const getPeriodLabel = (p: string) => {
+        const labels: Record<string, string> = {
+            'hour': 'Hour',
+            'day': 'Day',
+            'week': 'Week',
+            'month': 'Month',
+            'year': '1 Year'
+        };
+        return labels[p] || p;
+    };
     return (
         <motion.div
             initial={{ x: -100, opacity: 0 }}
@@ -99,12 +110,12 @@ export default function Sidebar({
 
                 {/* Intelligence Filters */}
                 <div className="space-y-8">
-                    <div className="flex flex-col gap-4">
+                    <div key={`temporal-${hazard}`} className="flex flex-col gap-4">
                         <div className="flex items-center justify-between">
                             <label className="text-[0.6rem] uppercase tracking-[0.3em] text-white/20 font-bold flex items-center gap-2">
                                 <Clock className="w-3.5 h-3.5" /> Temporal Range
                             </label>
-                            <span className="text-[0.6rem] text-cyan uppercase font-bold tracking-widest font-mono glow-cyan">{period}</span>
+                            <span className="text-[0.6rem] text-cyan uppercase font-bold tracking-widest font-mono glow-cyan">{getPeriodLabel(period)}</span>
                         </div>
                         <select
                             value={period}
@@ -115,10 +126,11 @@ export default function Sidebar({
                             <option value="day">Past 24 Hours</option>
                             <option value="week">Past 7 Days</option>
                             <option value="month">Past 30 Days</option>
+                            <option value="year">Past 1 Year</option>
                         </select>
                     </div>
 
-                    <div className="flex flex-col gap-4">
+                    <div key={`intensity-${hazard}`} className="flex flex-col gap-4">
                         <div className="flex items-center justify-between">
                             <label className="text-[0.6rem] uppercase tracking-[0.3em] text-white/20 font-bold flex items-center gap-2">
                                 <Activity className="w-3.5 h-3.5" /> {hazard === 'seismic' ? 'Force' : 'Intensity'} Filter

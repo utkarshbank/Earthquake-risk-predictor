@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import Globe from 'react-globe.gl';
 import { HazardEvent } from '@/services/hazardEvents';
 import { useHazard } from '@/context/HazardContext';
+import * as THREE from 'three';
 
 interface GlobeViewerProps {
     events: HazardEvent[];
@@ -39,39 +40,103 @@ export default function GlobeViewer({ events, onSelectEvent }: GlobeViewerProps)
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Add stars to the scene
+    useEffect(() => {
+        if (!globeEl.current) return;
+
+        let stars: THREE.Points | null = null;
+        let ambientLight: THREE.AmbientLight | null = null;
+        let timeoutId: NodeJS.Timeout | null = null;
+
+        // Wait for scene to be ready
+        const setupScene = () => {
+            const scene = globeEl.current?.scene();
+            if (!scene) {
+                timeoutId = setTimeout(setupScene, 100);
+                return;
+            }
+
+            // Create starfield
+            const starsGeometry = new THREE.BufferGeometry();
+            const starsMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.5,
+                transparent: true,
+                opacity: 0.8,
+            });
+
+            const starsVertices = [];
+            const numStars = 5000;
+            for (let i = 0; i < numStars; i++) {
+                const x = (Math.random() - 0.5) * 2000;
+                const y = (Math.random() - 0.5) * 2000;
+                const z = (Math.random() - 0.5) * 2000;
+                starsVertices.push(x, y, z);
+            }
+
+            starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+            stars = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(stars);
+
+            // Add ambient light to brighten the earth
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+        };
+
+        setupScene();
+
+        return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            
+            const scene = globeEl.current?.scene();
+            if (scene) {
+                if (stars) scene.remove(stars);
+                if (ambientLight) scene.remove(ambientLight);
+            }
+        };
+    }, [dimensions]);
+
     // Prepare data for the globe
     const globeData = events.map(event => {
-        let color = '#d4af37'; // Default Gold for seismic
+        // Dark orange for earthquakes, with some transparency
+        let color = '#FF8C00CC'; // Dark orange for seismic/earthquake with ~80% opacity (CC = 204/255)
         if (hazard === 'wildfire') color = '#ff4d00'; // Flame Orange
         if (hazard === 'storm') color = '#00f2ff'; // Torrent Cyan
 
         return {
             ...event,
             size: hazard === 'seismic' ? Math.pow(event.magnitude, 2) / 40 : event.intensity * 0.15,
-            color: event.intensity > 0.6 ? color : `${color}80` // Fade lower intensity
+            color: color
         };
+    });
+
+    // Filter rings to only show for current hazard type
+    const ringsData = globeData.filter(d => {
+        const eventType = (d as any).type;
+        return d.intensity > 0.6 && eventType === hazard;
     });
 
     return (
         <div className="absolute inset-0 z-0 bg-transparent flex items-center justify-center">
             <Globe
+                key={hazard} // Force remount when hazard changes to clear old rings
                 ref={globeEl}
                 width={dimensions.width}
                 height={dimensions.height}
                 backgroundColor="rgba(0,0,0,0)"
-                globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+                globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
                 bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-                atmosphereColor="#d4af37"
+                atmosphereColor="#87CEEB"
                 atmosphereAltitude={0.15}
 
                 pointsData={globeData}
                 pointLat="lat"
                 pointLng="lng"
                 pointColor="color"
-                pointAltitude={0.01}
+                pointAltitude={0.02}
                 pointRadius={d => {
-                    const base = (d as any).type === 'seismic' ? Math.pow((d as any).magnitude, 2.2) / 25 : (d as any).intensity * 0.35;
-                    return Math.max(base, 0.5); // Ensure a minimum interaction radius
+                    const base = (d as any).type === 'seismic' ? Math.pow((d as any).magnitude, 2.2) / 20 : (d as any).intensity * 0.4;
+                    return Math.max(base, 1.0); // Larger, more visible points
                 }}
                 pointsMerge={false}
                 pointLabel={d => `
@@ -100,8 +165,8 @@ export default function GlobeViewer({ events, onSelectEvent }: GlobeViewerProps)
                     }
                 }}
 
-                // Ring data for significant events
-                ringsData={globeData.filter(d => d.intensity > 0.6)}
+                // Ring data for significant events - only show rings for current hazard type
+                ringsData={ringsData}
                 ringLat="lat"
                 ringLng="lng"
                 ringColor={(d: any) => d.color}
